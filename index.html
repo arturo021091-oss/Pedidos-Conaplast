@@ -1,1 +1,307 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Conaplast C.A. - Cotizador</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; padding: 15px; background-color: #f2f2f7; margin: 0; }
+        h2 { color: #1c1c1e; text-align: center; font-size: 22px; margin-bottom: 5px; }
+        p.subtitle { text-align: center; color: #8e8e93; font-size: 14px; margin-top: 0; margin-bottom: 20px; }
+        .card { background: #ffffff; padding: 20px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        .form-row { display: flex; gap: 10px; }
+        .form-row .form-group { flex: 1; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: 600; color: #3a3a3c; font-size: 13px; }
+        input, select { width: 100%; padding: 10px; border: 1px solid #d1d1d6; border-radius: 8px; box-sizing: border-box; font-size: 16px; background-color: #fafafa; }
+        
+        .section-title { color:#007aff; font-size: 15px; margin-bottom: 10px; font-weight: bold; border-bottom: 1px solid #e5e5ea; padding-bottom: 5px; margin-top: 20px; }
+        
+        /* Checkbox switch estilo iOS */
+        .switch-container { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-top: 1px solid #e5e5ea; border-bottom: 1px solid #e5e5ea; margin-bottom: 15px; }
+        .switch-container label { margin-bottom: 0; font-size: 15px; }
+        input[type="checkbox"] { width: 20px; height: 20px; }
+
+        button { background-color: #007aff; color: white; border: none; padding: 14px; border-radius: 8px; font-weight: bold; font-size: 16px; width: 100%; cursor: pointer; margin-top: 10px; }
+        button:active { background-color: #0056b3; }
+        .btn-borrar { background-color: #ff3b30; margin-top: 20px; }
+        .btn-borrar:active { background-color: #c93429; }
+        .btn-wa { background-color: #25D366; padding: 8px 12px; font-size: 13px; margin-top: 0; border-radius: 6px; }
+        
+        .table-container { overflow-x: auto; background: white; border-radius: 12px; padding: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);}
+        table { width: 100%; border-collapse: collapse; font-size: 12px; }
+        th, td { border-bottom: 1px solid #e5e5ea; padding: 10px 5px; text-align: left; vertical-align: middle; }
+        th { color: #8e8e93; font-weight: 600; }
+        .totales { font-weight: bold; color: #34c759; }
+        .impresion-tag { color: #ff9500; font-size: 11px; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <h2>📦 Conaplast C.A.</h2>
+    <p class="subtitle">Cotizador Industrial</p>
+
+    <div class="card">
+        <div class="section-title">1. Datos del Cliente</div>
+        <div class="form-group">
+            <label for="cliente">Nombre del Cliente:</label>
+            <input type="text" id="cliente" placeholder="Ej: Inversiones XYZ">
+        </div>
+        <div class="form-group">
+            <label for="rif">RIF:</label>
+            <input type="text" id="rif" placeholder="Ej: J-12345678-9">
+        </div>
+        
+        <div class="section-title">2. Medidas de la Bolsa (cm)</div>
+        <div class="form-row">
+            <div class="form-group">
+                <label for="ancho">Ancho:</label>
+                <input type="number" id="ancho" step="0.1" placeholder="Ej: 40">
+            </div>
+            <div class="form-group">
+                <label for="largo">Largo:</label>
+                <input type="number" id="largo" step="0.1" placeholder="Ej: 50">
+            </div>
+            <div class="form-group">
+                <label for="espesor">Espesor:</label>
+                <input type="number" id="espesor" step="0.001" placeholder="Ej: 0.005">
+            </div>
+        </div>
+
+        <div class="section-title">3. Impresión</div>
+        <div class="switch-container">
+            <label for="impresa">¿Bolsa Impresa?</label>
+            <input type="checkbox" id="impresa" onchange="toggleImpresion()">
+        </div>
+        
+        <div id="opcionesImpresion" style="display: none;">
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="caras">Caras Impresas:</label>
+                    <select id="caras">
+                        <option value="1">1 Cara</option>
+                        <option value="2">2 Caras</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="colores">N° de Colores (Max 6):</label>
+                    <select id="colores">
+                        <option value="1">1 Color</option>
+                        <option value="2">2 Colores</option>
+                        <option value="3">3 Colores</option>
+                        <option value="4">4 Colores</option>
+                        <option value="5">5 Colores</option>
+                        <option value="6">6 Colores</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div class="section-title">4. Datos del Pedido</div>
+        <div class="form-row">
+            <div class="form-group">
+                <label for="tipoCalculo">Calcular a partir de:</label>
+                <select id="tipoCalculo" onchange="actualizarPlaceholder()">
+                    <option value="kg">Tengo los Kilos</option>
+                    <option value="unidades">Tengo las Bolsas</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label id="lblValor" for="valorPedido">Cantidad (Kg):</label>
+                <input type="number" id="valorPedido" placeholder="Mínimo 300">
+            </div>
+        </div>
+
+        <div class="section-title">5. Finanzas</div>
+        <div class="form-row">
+            <div class="form-group">
+                <label for="precioKg">Precio por Kg ($):</label>
+                <input type="number" id="precioKg" step="0.01" placeholder="Ej: 2.50">
+            </div>
+            <div class="form-group">
+                <label for="tasa">Tasa (Bs por $):</label>
+                <input type="number" id="tasa" step="0.01">
+            </div>
+        </div>
+
+        <button onclick="procesarPedido()">Calcular y Registrar Pedido</button>
+    </div>
+
+    <div class="table-container">
+        <table id="tablaRegistros">
+            <thead>
+                <tr>
+                    <th>Cliente / RIF</th>
+                    <th>Detalles</th>
+                    <th>Totales</th>
+                    <th>Acción</th>
+                </tr>
+            </thead>
+            <tbody id="listaVentas"></tbody>
+        </table>
+        <button class="btn-borrar" onclick="borrarHistorial()">Borrar Historial</button>
+    </div>
+
+    <script>
+        // Memoria interna
+        let ventas = JSON.parse(localStorage.getItem('ventasConaplastV3')) || [];
+        mostrarVentas();
+
+        // Mostrar u ocultar opciones de impresión
+        function toggleImpresion() {
+            const isChecked = document.getElementById('impresa').checked;
+            document.getElementById('opcionesImpresion').style.display = isChecked ? 'block' : 'none';
+        }
+
+        // Cambiar etiquetas según lo que se va a calcular
+        function actualizarPlaceholder() {
+            const tipo = document.getElementById('tipoCalculo').value;
+            const lbl = document.getElementById('lblValor');
+            const input = document.getElementById('valorPedido');
+            
+            if(tipo === 'kg') {
+                lbl.innerText = 'Cantidad (Kg):';
+                input.placeholder = 'Mínimo 300';
+            } else {
+                lbl.innerText = 'Cantidad (Bolsas):';
+                input.placeholder = 'Ej: 50000';
+            }
+        }
+
+        function procesarPedido() {
+            // Recolectar datos
+            const cliente = document.getElementById('cliente').value;
+            const rif = document.getElementById('rif').value;
+            const ancho = parseFloat(document.getElementById('ancho').value);
+            const largo = parseFloat(document.getElementById('largo').value);
+            const espesor = parseFloat(document.getElementById('espesor').value);
+            const tipoCalculo = document.getElementById('tipoCalculo').value;
+            const valorPedido = parseFloat(document.getElementById('valorPedido').value);
+            const precioKg = parseFloat(document.getElementById('precioKg').value);
+            const tasa = parseFloat(document.getElementById('tasa').value);
+            
+            // Densidad fija interna (Polietileno estándar)
+            const densidad = 0.92; 
+
+            // Validaciones básicas
+            if (!cliente || !ancho || !largo || !espesor || !valorPedido || !precioKg || !tasa) {
+                alert("⚠️ Por favor, llena todos los campos numéricos y el nombre del cliente.");
+                return;
+            }
+
+            // Datos de impresión
+            let esImpresa = document.getElementById('impresa').checked;
+            let caras = esImpresa ? document.getElementById('caras').value : 0;
+            let colores = esImpresa ? document.getElementById('colores').value : 0;
+
+            // FÓRMULA DE INGENIERÍA: Peso de 1 bolsa
+            const volumenBolsa = ancho * largo * (espesor * 2);
+            const pesoUnaBolsaKg = (volumenBolsa * densidad) / 1000;
+
+            let pesoTotalCalculado = 0;
+            let bolsasCalculadas = 0;
+
+            // CÁLCULO BIDIRECCIONAL
+            if (tipoCalculo === 'kg') {
+                pesoTotalCalculado = valorPedido;
+                if (pesoTotalCalculado < 300) {
+                    alert("🛑 El pedido mínimo aceptado por la compañía es de 300 kg.");
+                    return;
+                }
+                bolsasCalculadas = Math.floor(pesoTotalCalculado / pesoUnaBolsaKg);
+            } else {
+                bolsasCalculadas = valorPedido;
+                pesoTotalCalculado = bolsasCalculadas * pesoUnaBolsaKg;
+                
+                // Si calcularon por bolsas pero no llegan a los 300kg, mostramos advertencia
+                if (pesoTotalCalculado < 300) {
+                    let confirmar = confirm(`⚠️ Esas ${bolsasCalculadas} bolsas pesan ${pesoTotalCalculado.toFixed(2)} kg. Es MENOR al mínimo de 300kg de la compañía.\n\n¿Registrar de todas formas?`);
+                    if (!confirmar) return;
+                }
+            }
+
+            // CÁLCULOS FINANCIEROS
+            const totalUSD = pesoTotalCalculado * precioKg;
+            const totalBs = totalUSD * tasa;
+
+            // Construir el registro
+            const nuevaVenta = {
+                cliente, rif,
+                medidas: `${ancho}x${largo} cm (Esp: ${espesor})`,
+                esImpresa, caras, colores,
+                pesoKg: pesoTotalCalculado.toFixed(2),
+                cantidadBolsas: bolsasCalculadas.toLocaleString('es-VE'),
+                precioKg, tasa,
+                totalUSD: totalUSD.toFixed(2),
+                totalBs: totalBs.toFixed(2)
+            };
+
+            ventas.unshift(nuevaVenta);
+            localStorage.setItem('ventasConaplastV3', JSON.stringify(ventas));
+            mostrarVentas();
+
+            // Limpiar campos, dejando Tasa y PrecioKg por comodidad
+            document.getElementById('cliente').value = '';
+            document.getElementById('rif').value = '';
+            document.getElementById('ancho').value = '';
+            document.getElementById('largo').value = '';
+            document.getElementById('espesor').value = '';
+            document.getElementById('valorPedido').value = '';
+            document.getElementById('impresa').checked = false;
+            toggleImpresion();
+            
+            alert(`✅ Cálculo exitoso:\nPeso total: ${pesoTotalCalculado.toFixed(2)} kg\nUnidades: ${bolsasCalculadas.toLocaleString('es-VE')} bolsas.`);
+        }
+
+        function mostrarVentas() {
+            const tbody = document.getElementById('listaVentas');
+            tbody.innerHTML = ''; 
+
+            ventas.forEach((venta, index) => {
+                let textoImpresion = venta.esImpresa 
+                    ? `<br><span class="impresion-tag">🖨️ Impresa: ${venta.caras} cara(s), ${venta.colores} color(es)</span>` 
+                    : '<br><span style="color:gray; font-size:10px;">Sin impresión</span>';
+
+                let rifTexto = venta.rif ? `<br><small>RIF: ${venta.rif}</small>` : '';
+
+                const fila = document.createElement('tr');
+                fila.innerHTML = `
+                    <td><strong>${venta.cliente}</strong>${rifTexto}</td>
+                    <td>
+                        <small><b>${venta.pesoKg} Kg</b> (${venta.cantidadBolsas} uds)</small><br>
+                        <small style="color: gray;">${venta.medidas}</small>
+                        ${textoImpresion}
+                    </td>
+                    <td>
+                        <span class="totales">$${venta.totalUSD}</span><br>
+                        <small>Bs. ${venta.totalBs}</small>
+                    </td>
+                    <td><button class="btn-wa" onclick="enviarWhatsApp(${index})">Enviar</button></td>
+                `;
+                tbody.appendChild(fila);
+            });
+        }
+
+        function enviarWhatsApp(index) {
+            const v = ventas[index];
+            let detalleImpresion = v.esImpresa ? `\n🎨 *Detalles de Impresión:*\n- Caras: ${v.caras}\n- Colores: ${v.colores}` : `\n🎨 *Detalles de Impresión:* Sin impresión`;
+            let rifStr = v.rif ? `\n- RIF: ${v.rif}` : '';
+            
+            const mensaje = `Hola, te saludo desde *Conaplast C.A.*\n\nAquí tienes la cotización de tu pedido:\n\n👤 *Cliente:* ${v.cliente}${rifStr}\n\n📦 *Especificaciones:*\n- Medidas: ${v.medidas}\n- Pedido total: ${v.pesoKg} Kg\n- Rendimiento aprox: ${v.cantidadBolsas} bolsas${detalleImpresion}\n\n💰 *Inversión total:*\n- Dólares: $${v.totalUSD} (a $${v.precioKg}/Kg)\n- Bolívares: Bs. ${v.totalBs} (Tasa: ${v.tasa})\n\nQuedamos a tu entera disposición.`;
+            
+            const textoCodificado = encodeURIComponent(mensaje);
+            window.open(`https://wa.me/?text=${textoCodificado}`, '_blank');
+        }
+
+        function borrarHistorial() {
+            if(confirm("¿Estás seguro de que deseas borrar todo el historial?")) {
+                ventas = [];
+                localStorage.removeItem('ventasConaplastV3');
+                mostrarVentas();
+            }
+        }
+    </script>
+
+</body>
+</html>
 
