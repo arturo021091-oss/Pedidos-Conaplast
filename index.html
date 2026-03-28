@@ -6,25 +6,36 @@
     <title>Conaplast C.A. - Pedidos</title>
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; padding: 15px; background-color: #f2f2f7; margin: 0; }
-        h2 { color: #1c1c1e; text-align: center; font-size: 22px; }
+        h2 { color: #1c1c1e; text-align: center; font-size: 22px; margin-bottom: 5px; }
+        p.subtitle { text-align: center; color: #8e8e93; font-size: 14px; margin-top: 0; margin-bottom: 20px; }
         .card { background: #ffffff; padding: 20px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        .form-row { display: flex; gap: 10px; }
+        .form-row .form-group { flex: 1; }
         .form-group { margin-bottom: 15px; }
-        label { display: block; margin-bottom: 5px; font-weight: 600; color: #3a3a3c; font-size: 14px; }
-        input { width: 100%; padding: 12px; border: 1px solid #d1d1d6; border-radius: 8px; box-sizing: border-box; font-size: 16px; background-color: #fafafa; }
+        label { display: block; margin-bottom: 5px; font-weight: 600; color: #3a3a3c; font-size: 13px; }
+        input { width: 100%; padding: 10px; border: 1px solid #d1d1d6; border-radius: 8px; box-sizing: border-box; font-size: 16px; background-color: #fafafa; }
+        
         button { background-color: #007aff; color: white; border: none; padding: 14px; border-radius: 8px; font-weight: bold; font-size: 16px; width: 100%; cursor: pointer; margin-top: 10px; }
         button:active { background-color: #0056b3; }
         .btn-borrar { background-color: #ff3b30; margin-top: 20px; }
         .btn-borrar:active { background-color: #c93429; }
+        
+        /* Estilo para el botón de WhatsApp */
+        .btn-wa { background-color: #25D366; padding: 8px 12px; font-size: 13px; margin-top: 0; border-radius: 6px; }
+        .btn-wa:active { background-color: #1EBE55; }
+
         .table-container { overflow-x: auto; background: white; border-radius: 12px; padding: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);}
-        table { width: 100%; border-collapse: collapse; font-size: 14px; }
-        th, td { border-bottom: 1px solid #e5e5ea; padding: 10px 5px; text-align: left; }
+        table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        th, td { border-bottom: 1px solid #e5e5ea; padding: 10px 5px; text-align: left; vertical-align: middle; }
         th { color: #8e8e93; font-weight: 600; }
         .totales { font-weight: bold; color: #34c759; }
+        .bolsas-calc { color: #007aff; font-weight: bold; }
     </style>
 </head>
 <body>
 
     <h2>📦 Conaplast C.A.</h2>
+    <p class="subtitle">Calculadora de Producción y Ventas</p>
 
     <div class="card">
         <div class="form-group">
@@ -35,34 +46,58 @@
             <label for="cliente">Nombre del Cliente:</label>
             <input type="text" id="cliente" placeholder="Ej: Inversiones XYZ">
         </div>
-        <div class="form-group">
-            <label for="descripcion">Descripción del Producto:</label>
-            <input type="text" id="descripcion" placeholder="Ej: Bolsas tipo camiseta">
+        
+        <hr style="border: 0; border-top: 1px solid #e5e5ea; margin: 20px 0;">
+        <label style="color:#007aff; font-size: 15px; margin-bottom: 10px;">Especificaciones de la Bolsa (en cm)</label>
+        
+        <div class="form-row">
+            <div class="form-group">
+                <label for="ancho">Ancho:</label>
+                <input type="number" id="ancho" step="0.1" placeholder="Ej: 40">
+            </div>
+            <div class="form-group">
+                <label for="largo">Largo:</label>
+                <input type="number" id="largo" step="0.1" placeholder="Ej: 50">
+            </div>
         </div>
-        <div class="form-group">
-            <label for="medidas">Medidas (cm o pulgadas):</label>
-            <input type="text" id="medidas" placeholder="Ej: 40x50 cm">
+        
+        <div class="form-row">
+            <div class="form-group">
+                <label for="espesor">Espesor (cm):</label>
+                <input type="number" id="espesor" step="0.001" placeholder="Ej: 0.005">
+            </div>
+            <div class="form-group">
+                <label for="densidad">Densidad (g/cm³):</label>
+                <input type="number" id="densidad" step="0.01" value="0.92">
+            </div>
         </div>
-        <div class="form-group">
-            <label for="cantidad">Cantidad de Bolsas:</label>
-            <input type="number" id="cantidad" placeholder="Ej: 5000">
+
+        <hr style="border: 0; border-top: 1px solid #e5e5ea; margin: 20px 0;">
+        <label style="color:#007aff; font-size: 15px; margin-bottom: 10px;">Datos del Pedido</label>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label for="peso">Peso Total (Kg):</label>
+                <input type="number" id="peso" step="1" placeholder="Mín: 300">
+            </div>
+            <div class="form-group">
+                <label for="precioKg">Precio por Kg ($):</label>
+                <input type="number" id="precioKg" step="0.01" placeholder="Ej: 2.50">
+            </div>
         </div>
-        <div class="form-group">
-            <label for="precio">Precio Unitario ($):</label>
-            <input type="number" id="precio" step="0.001" placeholder="Ej: 0.015">
-        </div>
-        <button onclick="guardarRegistro()">Registrar Venta</button>
+
+        <button onclick="guardarRegistro()">Calcular y Registrar Pedido</button>
     </div>
 
     <div class="table-container">
         <table id="tablaRegistros">
             <thead>
                 <tr>
-                    <th>Cliente</th>
-                    <th>Detalles</th>
-                    <th>Cant.</th>
+                    <th>Cliente / Medidas</th>
+                    <th>Kg</th>
+                    <th>Unidades</th>
                     <th>Total ($)</th>
-                    <th>Total (Bs)</th>
+                    <th>Acción</th>
                 </tr>
             </thead>
             <tbody id="listaVentas">
@@ -72,69 +107,94 @@
     </div>
 
     <script>
-        // Cargar datos al abrir la aplicación
-        let ventas = JSON.parse(localStorage.getItem('ventasConaplast')) || [];
+        let ventas = JSON.parse(localStorage.getItem('ventasConaplast2')) || [];
         mostrarVentas();
 
         function guardarRegistro() {
             const tasa = parseFloat(document.getElementById('tasa').value);
             const cliente = document.getElementById('cliente').value;
-            const descripcion = document.getElementById('descripcion').value;
-            const medidas = document.getElementById('medidas').value;
-            const cantidad = parseFloat(document.getElementById('cantidad').value);
-            const precio = parseFloat(document.getElementById('precio').value);
+            const ancho = parseFloat(document.getElementById('ancho').value);
+            const largo = parseFloat(document.getElementById('largo').value);
+            const espesor = parseFloat(document.getElementById('espesor').value);
+            const densidad = parseFloat(document.getElementById('densidad').value);
+            const peso = parseFloat(document.getElementById('peso').value);
+            const precioKg = parseFloat(document.getElementById('precioKg').value);
 
-            if (!tasa || !cliente || !cantidad || !precio) {
-                alert("⚠️ Por favor, llena al menos la Tasa, Cliente, Cantidad y Precio.");
+            if (!tasa || !cliente || !ancho || !largo || !espesor || !peso || !precioKg || !densidad) {
+                alert("⚠️ Por favor, llena todos los campos para poder hacer el cálculo exacto.");
                 return;
             }
 
-            const totalUSD = cantidad * precio;
+            if (peso < 300) {
+                alert("🛑 El pedido mínimo aceptado por la compañía es de 300 kg.");
+                return;
+            }
+
+            const volumenBolsa = ancho * largo * (espesor * 2);
+            const pesoUnaBolsaGramos = volumenBolsa * densidad;
+            const pesoUnaBolsaKg = pesoUnaBolsaGramos / 1000;
+            const cantidadBolsas = Math.floor(peso / pesoUnaBolsaKg); 
+
+            const totalUSD = peso * precioKg;
             const totalBs = totalUSD * tasa;
 
-            // Crear el objeto de la venta
             const nuevaVenta = {
-                cliente, descripcion, medidas, cantidad, 
+                cliente, 
+                medidas: `${ancho}x${largo} cm (Esp: ${espesor})`, 
+                peso,
+                cantidadBolsas: cantidadBolsas.toLocaleString('es-VE'), 
                 totalUSD: totalUSD.toFixed(2), 
                 totalBs: totalBs.toFixed(2)
             };
 
-            // Guardar en el arreglo y en la memoria del navegador
-            ventas.unshift(nuevaVenta); // Lo pone al inicio de la lista
-            localStorage.setItem('ventasConaplast', JSON.stringify(ventas));
-
-            // Actualizar la tabla
+            ventas.unshift(nuevaVenta);
+            localStorage.setItem('ventasConaplast2', JSON.stringify(ventas));
             mostrarVentas();
 
-            // Limpiar el formulario
             document.getElementById('cliente').value = '';
-            document.getElementById('descripcion').value = '';
-            document.getElementById('medidas').value = '';
-            document.getElementById('cantidad').value = '';
-            document.getElementById('precio').value = '';
+            document.getElementById('ancho').value = '';
+            document.getElementById('largo').value = '';
+            document.getElementById('espesor').value = '';
+            document.getElementById('peso').value = '';
+            document.getElementById('precioKg').value = '';
+            
+            alert(`✅ Cálculo exitoso:\nDe ${peso}kg saldrán aproximadamente ${cantidadBolsas.toLocaleString('es-VE')} bolsas.`);
         }
 
         function mostrarVentas() {
             const tbody = document.getElementById('listaVentas');
-            tbody.innerHTML = ''; // Limpiar antes de mostrar
+            tbody.innerHTML = ''; 
 
-            ventas.forEach(venta => {
+            ventas.forEach((venta, index) => {
                 const fila = document.createElement('tr');
                 fila.innerHTML = `
-                    <td><strong>${venta.cliente}</strong></td>
-                    <td>${venta.descripcion}<br><small style="color: gray;">${venta.medidas}</small></td>
-                    <td>${venta.cantidad}</td>
+                    <td><strong>${venta.cliente}</strong><br><small style="color: gray;">${venta.medidas}</small></td>
+                    <td>${venta.peso}</td>
+                    <td class="bolsas-calc">${venta.cantidadBolsas}</td>
                     <td class="totales">$${venta.totalUSD}</td>
-                    <td class="totales">Bs ${venta.totalBs}</td>
+                    <td><button class="btn-wa" onclick="enviarWhatsApp(${index})">Enviar</button></td>
                 `;
                 tbody.appendChild(fila);
             });
         }
 
+        function enviarWhatsApp(index) {
+            const venta = ventas[index];
+            
+            // Construimos el mensaje que se enviará
+            const mensaje = `Hola ${venta.cliente}, te saludo desde *Conaplast C.A.*\n\nAquí tienes la estimación de tu pedido de bolsas:\n\n📦 *Especificaciones:*\n- Medidas: ${venta.medidas}\n- Pedido total: ${venta.peso} Kg\n- Rendimiento aprox: ${venta.cantidadBolsas} bolsas\n\n💰 *Inversión total:*\n- Dólares: $${venta.totalUSD}\n- Bolívares: Bs. ${venta.totalBs}\n\nQuedamos a tu entera disposición.`;
+            
+            // Codificamos el texto para que las URLs lo entiendan (respeta espacios y saltos de línea)
+            const textoCodificado = encodeURIComponent(mensaje);
+            
+            // Abrimos WhatsApp con el mensaje pre-cargado
+            window.open(`https://wa.me/?text=${textoCodificado}`, '_blank');
+        }
+
         function borrarHistorial() {
-            if(confirm("¿Estás seguro de que deseas borrar todo el historial de ventas? Esto no se puede deshacer.")) {
+            if(confirm("¿Estás seguro de que deseas borrar todo el historial?")) {
                 ventas = [];
-                localStorage.removeItem('ventasConaplast');
+                localStorage.removeItem('ventasConaplast2');
                 mostrarVentas();
             }
         }
