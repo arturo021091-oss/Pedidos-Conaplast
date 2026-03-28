@@ -18,8 +18,7 @@
         body::before, body::after {
             content: '';
             position: fixed;
-            width: 300px;
-            height: 300px;
+            width: 300px; height: 300px;
             background-color: rgba(30, 58, 138, 0.3);
             transform: rotate(45deg);
             z-index: -1;
@@ -92,15 +91,15 @@
         <div class="form-row">
             <div class="form-group">
                 <label for="ancho">Ancho:</label>
-                <input type="number" id="ancho" step="0.1" placeholder="Ej: 40" oninput="calcularTodo()">
+                <input type="number" id="ancho" step="0.1" placeholder="Ej: 40" oninput="calcularBase()">
             </div>
             <div class="form-group">
                 <label for="largo">Largo:</label>
-                <input type="number" id="largo" step="0.1" placeholder="Ej: 50" oninput="calcularTodo()">
+                <input type="number" id="largo" step="0.1" placeholder="Ej: 50" oninput="calcularBase()">
             </div>
             <div class="form-group">
                 <label for="espesor">Espesor:</label>
-                <input type="number" id="espesor" step="0.001" placeholder="Ej: 0.005" oninput="calcularTodo()">
+                <input type="number" id="espesor" step="0.001" placeholder="Ej: 0.005" oninput="calcularBase()">
             </div>
         </div>
 
@@ -113,11 +112,11 @@
             <div class="form-row">
                 <div class="form-group">
                     <label for="fuelleIzq">Fuelle Izquierdo (cm):</label>
-                    <input type="number" id="fuelleIzq" step="0.1" oninput="calcularTodo()">
+                    <input type="number" id="fuelleIzq" step="0.1" oninput="calcularBase()">
                 </div>
                 <div class="form-group">
                     <label for="fuelleDer">Fuelle Derecho (cm):</label>
-                    <input type="number" id="fuelleDer" step="0.1" oninput="calcularTodo()">
+                    <input type="number" id="fuelleDer" step="0.1" oninput="calcularBase()">
                 </div>
             </div>
         </div>
@@ -160,15 +159,12 @@
 
         <div class="form-row">
             <div class="form-group">
-                <label for="tipoCalculo">Calcular a partir de:</label>
-                <select id="tipoCalculo" onchange="actualizarPlaceholder()">
-                    <option value="kg">Kg</option>
-                    <option value="unidades">Bolsas</option>
-                </select>
+                <label for="cantidadBolsasInput">Bolsas:</label>
+                <input type="number" id="cantidadBolsasInput" placeholder="Cantidad unidades" oninput="calcularDesdeBolsas()">
             </div>
             <div class="form-group">
-                <label id="lblValor" for="valorPedido">Cantidad:</label>
-                <input type="number" id="valorPedido" placeholder="Mínimo 300">
+                <label for="cantidadKgInput">Kg:</label>
+                <input type="number" id="cantidadKgInput" placeholder="Cantidad peso" oninput="calcularDesdeKg()">
             </div>
         </div>
 
@@ -176,7 +172,7 @@
         <div class="form-row">
             <div class="form-group">
                 <label for="precioKg">Precio por Kg ($):</label>
-                <input type="number" id="precioKg" step="0.01" oninput="calcularTodo()">
+                <input type="number" id="precioKg" step="0.01" oninput="calcularPreciosFinanzas()">
             </div>
             <div class="form-group">
                 <label for="precioMillarUSD">Precio Millar ($):</label>
@@ -207,94 +203,104 @@
     </div>
 
     <script>
-        let ventas = JSON.parse(localStorage.getItem('ventasConaplastV6')) || [];
+        let ventas = JSON.parse(localStorage.getItem('ventasConaplastV7')) || [];
         mostrarVentas();
 
-        // Esta función ahora calcula pesos y el precio por millar
-        function calcularTodo() {
+        // Función base para obtener el peso de una bolsa según medidas
+        function getPesoUnaBolsaKg() {
             const ancho = parseFloat(document.getElementById('ancho').value) || 0;
             const largo = parseFloat(document.getElementById('largo').value) || 0;
             const espesor = parseFloat(document.getElementById('espesor').value) || 0;
-            const precioKg = parseFloat(document.getElementById('precioKg').value) || 0;
             const llevaFuelle = document.getElementById('llevaFuelle').checked;
-            const fuelleIzq = llevaFuelle ? (parseFloat(document.getElementById('fuelleIzq').value) || 0) : 0;
-            const fuelleDer = llevaFuelle ? (parseFloat(document.getElementById('fuelleDer').value) || 0) : 0;
+            const fI = llevaFuelle ? (parseFloat(document.getElementById('fuelleIzq').value) || 0) : 0;
+            const fD = llevaFuelle ? (parseFloat(document.getElementById('fuelleDer').value) || 0) : 0;
             const densidad = 0.92;
 
             if (ancho > 0 && largo > 0 && espesor > 0) {
-                const anchoTotal = fuelleIzq + ancho + fuelleDer;
+                const anchoTotal = fI + ancho + fD;
                 const pesoG = (anchoTotal * largo * (espesor * 2) * densidad);
-                const pesoMillarKg = pesoG; // Recordamos que numéricamente es igual
+                return pesoG / 1000; // Retorna en Kg
+            }
+            return 0;
+        }
 
-                document.getElementById('pesoEspecifico').value = pesoG.toFixed(2) + ' g';
-                document.getElementById('pesoMillarKg').value = pesoMillarKg.toFixed(2) + ' Kg';
+        // Calcula Peso Específico y Millar (solo visual)
+        function calcularBase() {
+            const pesoKg = getPesoUnaBolsaKg();
+            if (pesoKg > 0) {
+                document.getElementById('pesoEspecifico').value = (pesoKg * 1000).toFixed(2) + ' g';
+                document.getElementById('pesoMillarKg').value = (pesoKg * 1000).toFixed(2) + ' Kg';
+                // Recalcular el cruce de bolsas/kg si ya hay valores
+                if(document.getElementById('cantidadBolsasInput').value) calcularDesdeBolsas();
+            }
+            calcularPreciosFinanzas();
+        }
 
-                // Cálculo del Precio por Millar ($)
-                if (precioKg > 0) {
-                    const precioM = pesoMillarKg * precioKg;
-                    document.getElementById('precioMillarUSD').value = precioM.toFixed(2) + ' $';
-                } else {
-                    document.getElementById('precioMillarUSD').value = '';
-                }
+        // LÓGICA AUTOMÁTICA SOLICITADA
+        function calcularDesdeBolsas() {
+            const bolsas = parseFloat(document.getElementById('cantidadBolsasInput').value) || 0;
+            const pesoUnitario = getPesoUnaBolsaKg();
+            if (pesoUnitario > 0 && bolsas > 0) {
+                document.getElementById('cantidadKgInput').value = (bolsas * pesoUnitario).toFixed(2);
             } else {
-                document.getElementById('pesoEspecifico').value = '';
-                document.getElementById('pesoMillarKg').value = '';
+                document.getElementById('cantidadKgInput').value = '';
+            }
+        }
+
+        function calcularDesdeKg() {
+            const kg = parseFloat(document.getElementById('cantidadKgInput').value) || 0;
+            const pesoUnitario = getPesoUnaBolsaKg();
+            if (pesoUnitario > 0 && kg > 0) {
+                document.getElementById('cantidadBolsasInput').value = Math.floor(kg / pesoUnitario);
+            } else {
+                document.getElementById('cantidadBolsasInput').value = '';
+            }
+        }
+
+        function calcularPreciosFinanzas() {
+            const pesoMillarKg = getPesoUnaBolsaKg() * 1000;
+            const precioKg = parseFloat(document.getElementById('precioKg').value) || 0;
+            if (pesoMillarKg > 0 && precioKg > 0) {
+                document.getElementById('precioMillarUSD').value = (pesoMillarKg * precioKg).toFixed(2) + ' $';
+            } else {
                 document.getElementById('precioMillarUSD').value = '';
             }
         }
 
         function toggleImpresion() { document.getElementById('opcionesImpresion').style.display = document.getElementById('impresa').checked ? 'block' : 'none'; }
-        function toggleFuelle() { document.getElementById('opcionesFuelle').style.display = document.getElementById('llevaFuelle').checked ? 'block' : 'none'; calcularTodo(); }
-        function actualizarPlaceholder() {
-            const tipo = document.getElementById('tipoCalculo').value;
-            document.getElementById('lblValor').innerText = tipo === 'kg' ? 'Cantidad (Kg):' : 'Cantidad (Bolsas):';
-        }
+        function toggleFuelle() { document.getElementById('opcionesFuelle').style.display = document.getElementById('llevaFuelle').checked ? 'block' : 'none'; calcularBase(); }
         function cerrarModal() { document.getElementById('modalResultado').style.display = 'none'; }
 
         function procesarPedido() {
             const cliente = document.getElementById('cliente').value;
-            const rif = document.getElementById('rif').value;
-            const ancho = parseFloat(document.getElementById('ancho').value);
-            const largo = parseFloat(document.getElementById('largo').value);
-            const espesor = parseFloat(document.getElementById('espesor').value);
-            const valorPedido = parseFloat(document.getElementById('valorPedido').value);
+            const kgFinal = parseFloat(document.getElementById('cantidadKgInput').value);
             const precioKg = parseFloat(document.getElementById('precioKg').value);
             const tasa = parseFloat(document.getElementById('tasa').value);
+            const bolsasFinal = document.getElementById('cantidadBolsasInput').value;
             
-            if (!cliente || !ancho || !largo || !espesor || !valorPedido || !precioKg || !tasa) { alert("⚠️ Completa los datos."); return; }
+            if (!cliente || !kgFinal || !precioKg || !tasa) { alert("⚠️ Completa los datos del cliente, peso y finanzas."); return; }
 
-            const llevaFuelle = document.getElementById('llevaFuelle').checked;
-            const fuelleIzq = llevaFuelle ? (parseFloat(document.getElementById('fuelleIzq').value) || 0) : 0;
-            const fuelleDer = llevaFuelle ? (parseFloat(document.getElementById('fuelleDer').value) || 0) : 0;
-            const anchoTotal = fuelleIzq + ancho + fuelleDer;
-            const pesoUnaBolsaKg = (anchoTotal * largo * (espesor * 2) * 0.92) / 1000;
-
-            let kgFinal = 0, bolsasFinal = 0;
-            if (document.getElementById('tipoCalculo').value === 'kg') {
-                kgFinal = valorPedido; bolsasFinal = Math.floor(kgFinal / pesoUnaBolsaKg);
-            } else {
-                bolsasFinal = valorPedido; kgFinal = bolsasFinal * pesoUnaBolsaKg;
-            }
-
-            const totalUSD = (kgFinal * precioKg);
-            const precioMillar = (pesoUnaBolsaKg * 1000 * precioKg).toFixed(2);
+            const totalUSD = kgFinal * precioKg;
+            const pesoU = getPesoUnaBolsaKg();
+            const precioM = (pesoU * 1000 * precioKg).toFixed(2);
 
             const nuevaVenta = {
-                cliente, rif,
-                medidas: llevaFuelle ? `[FI:${fuelleIzq}+A:${ancho}+FD:${fuelleDer}]x${largo}` : `${ancho}x${largo}`,
-                impresion: document.getElementById('impresa').checked ? `${document.getElementById('caras').value} caras / ${document.getElementById('colores').value} col` : 'No',
+                cliente, 
+                rif: document.getElementById('rif').value,
+                medidas: document.getElementById('ancho').value + "x" + document.getElementById('largo').value,
+                impresion: document.getElementById('impresa').checked ? "Sí" : "No",
                 pesoKg: kgFinal.toFixed(2),
-                cantidadBolsas: bolsasFinal.toLocaleString('es-VE'),
+                cantidadBolsas: parseInt(bolsasFinal).toLocaleString('es-VE'),
                 totalUSD: totalUSD.toFixed(2),
                 totalBs: (totalUSD * tasa).toFixed(2),
-                precioM: precioMillar
+                precioM: precioM
             };
 
             ventas.unshift(nuevaVenta);
-            localStorage.setItem('ventasConaplastV6', JSON.stringify(ventas));
+            localStorage.setItem('ventasConaplastV7', JSON.stringify(ventas));
             mostrarVentas();
 
-            document.getElementById('modalCuerpoTexto').innerHTML = `<strong>Kilos:</strong><br><span style="font-size:26px;color:#0F204C">${nuevaVenta.pesoKg} Kg</span><br><br><strong>Unidades:</strong><br><span style="font-size:26px;color:#0F204C">${nuevaVenta.cantidadBolsas}</span><br><br><strong>Precio Millar:</strong><br><span style="font-size:26px;color:#0F204C">$${nuevaVenta.precioM}</span>`;
+            document.getElementById('modalCuerpoTexto').innerHTML = `<strong>Kilos:</strong><br><span style="font-size:26px;color:#0F204C">${nuevaVenta.pesoKg} Kg</span><br><br><strong>Unidades:</strong><br><span style="font-size:26px;color:#0F204C">${nuevaVenta.cantidadBolsas}</span>`;
             document.getElementById('modalResultado').style.display = 'flex';
         }
 
@@ -303,9 +309,9 @@
             tbody.innerHTML = ''; 
             ventas.forEach((v, index) => {
                 const fila = document.createElement('tr');
-                fila.innerHTML = `<td><strong>${v.cliente}</strong><br><small>${v.rif || ''}</small></td>
-                    <td><small><b>${v.pesoKg} Kg</b> (${v.cantidadBolsas})</small><br><small style="color:gray">${v.medidas}</small><br><small style="color:#0F204C">Millar: $${v.precioM}</small></td>
-                    <td><span class="totales">$${v.totalUSD}</span><br><small>Bs. ${v.totalBs}</small></td>
+                fila.innerHTML = `<td><strong>${v.cliente}</strong></td>
+                    <td><small><b>${v.pesoKg} Kg</b> (${v.cantidadBolsas})</small></td>
+                    <td><span class="totales">$${v.totalUSD}</span></td>
                     <td><button class="btn-wa" onclick="enviarWA(${index})">WA</button></td>`;
                 tbody.appendChild(fila);
             });
@@ -313,12 +319,11 @@
 
         function enviarWA(index) {
             const v = ventas[index];
-            const msg = `Hola, cotización de *Conaplast C.A.*\n\n👤 *Cliente:* ${v.cliente}\n📦 *Pedido:* ${v.pesoKg} Kg (${v.cantidadBolsas} uds)\n📏 *Medidas:* ${v.medidas}\n🎨 *Impresión:* ${v.impresion}\n💵 *Precio Millar:* $${v.precioM}\n\n💰 *Total:* $${v.totalUSD} / Bs. ${v.totalBs}`;
+            const msg = `Cotización *Conaplast C.A.*\n\n👤 *Cliente:* ${v.cliente}\n📦 *Pedido:* ${v.pesoKg} Kg (${v.cantidadBolsas} uds)\n💰 *Total:* $${v.totalUSD} / Bs. ${v.totalBs}`;
             window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
         }
 
-        function borrarHistorial() { if(confirm("¿Borrar todo?")) { ventas = []; localStorage.removeItem('ventasConaplastV6'); mostrarVentas(); } }
+        function borrarHistorial() { if(confirm("¿Borrar historial?")) { ventas = []; localStorage.removeItem('ventasConaplastV7'); mostrarVentas(); } }
     </script>
 </body>
 </html>
-
