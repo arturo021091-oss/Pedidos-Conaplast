@@ -1,1 +1,347 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Conaplast C.A.</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            padding: 15px;
+            background: linear-gradient(135deg, #0f204c 0%, #1e3a8a 50%, #0f204c 100%);
+            background-attachment: fixed;
+            margin: 0;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        body::before, body::after {
+            content: '';
+            position: fixed;
+            width: 300px;
+            height: 300px;
+            background-color: rgba(30, 58, 138, 0.3);
+            transform: rotate(45deg);
+            z-index: -1;
+        }
+
+        body::before { top: -100px; left: -100px; }
+        body::after { bottom: -100px; right: -100px; width: 400px; height: 400px; }
+        
+        .logo-container { text-align: center; margin-bottom: 20px; margin-top: 15px; }
+        .logo-img { max-width: 250px; height: auto; }
+        
+        .card { background: #ffffff; padding: 20px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .form-row { display: flex; gap: 10px; }
+        .form-row .form-group { flex: 1; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: 600; color: #3a3a3c; font-size: 13px; }
+        input, select { width: 100%; padding: 10px; border: 1px solid #d1d1d6; border-radius: 8px; box-sizing: border-box; font-size: 16px; background-color: #fafafa; }
+        
+        .input-calculado { background-color: #e5e5ea !important; color: #0F204C; font-weight: bold; border: 1px dashed #a1a1aa; }
+        
+        .section-title { color: #0F204C; font-size: 15px; margin-bottom: 10px; font-weight: bold; border-bottom: 1px solid #e5e5ea; padding-bottom: 5px; margin-top: 20px; }
+        
+        .switch-container { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-top: 1px solid #e5e5ea; border-bottom: 1px solid #e5e5ea; margin-bottom: 15px; }
+        .switch-container label { margin-bottom: 0; font-size: 15px; }
+        input[type="checkbox"] { width: 20px; height: 20px; }
+
+        button { background-color: #0F204C; color: white; border: none; padding: 14px; border-radius: 8px; font-weight: bold; font-size: 16px; width: 100%; cursor: pointer; margin-top: 10px; }
+        button:active { background-color: #0B193C; }
+        .btn-borrar { background-color: #ff3b30; margin-top: 20px; }
+        .btn-wa { background-color: #25D366; padding: 8px 12px; font-size: 14px; margin-top: 0; border-radius: 6px; }
+        
+        .table-container { overflow-x: auto; background: white; border-radius: 12px; padding: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        table { width: 100%; border-collapse: collapse; font-size: 14px; }
+        th, td { border-bottom: 1px solid #e5e5ea; padding: 12px 5px; text-align: left; vertical-align: middle; }
+        .totales { font-weight: bold; color: #34c759; font-size: 15px; }
+        
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 9999; align-items: center; justify-content: center; backdrop-filter: blur(3px); }
+        .modal-content { background: white; padding: 25px; border-radius: 16px; width: 85%; max-width: 350px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
+        .modal-title { margin-top: 0; color: #0F204C; font-size: 22px; margin-bottom: 15px; }
+        .modal-text { font-size: 18px; color: #1c1c1e; margin: 10px 0; line-height: 1.4; }
+        .modal-btn { background-color: #0F204C; margin-top: 20px; }
+    </style>
+</head>
+<body>
+
+    <div id="modalResultado" class="modal-overlay">
+        <div class="modal-content">
+            <h3 class="modal-title">✅ Registro Exitoso</h3>
+            <div id="modalCuerpoTexto" class="modal-text"></div>
+            <button class="modal-btn" onclick="cerrarModal()">Aceptar</button>
+        </div>
+    </div>
+
+    <div class="logo-container">
+        <img src="logo.png" alt="Logo Conaplast" class="logo-img" onerror="this.style.display='none'">
+    </div>
+
+    <div class="card">
+        <div class="section-title">1. Datos del Cliente</div>
+        <div class="form-group">
+            <label for="cliente">Nombre del Cliente:</label>
+            <input type="text" id="cliente" placeholder="Ej: Inversiones XYZ">
+        </div>
+        <div class="form-group">
+            <label for="rif">RIF:</label>
+            <input type="text" id="rif" placeholder="Ej: J-12345678-9">
+        </div>
+        
+        <div class="section-title">2. Medidas de la Bolsa (cm)</div>
+        <div class="form-row">
+            <div class="form-group">
+                <label for="ancho">Ancho:</label>
+                <input type="number" id="ancho" step="0.1" placeholder="Ej: 40" oninput="calcularBase()">
+            </div>
+            <div class="form-group">
+                <label for="largo">Largo:</label>
+                <input type="number" id="largo" step="0.1" placeholder="Ej: 50" oninput="calcularBase()">
+            </div>
+            <div class="form-group">
+                <label for="espesor">Espesor:</label>
+                <input type="number" id="espesor" step="0.001" placeholder="Ej: 0.005" oninput="calcularBase()">
+            </div>
+        </div>
+
+        <div class="switch-container">
+            <label for="llevaFuelle">Fuelle</label>
+            <input type="checkbox" id="llevaFuelle" onchange="toggleFuelle()">
+        </div>
+
+        <div id="opcionesFuelle" style="display: none;">
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="fuelleIzq">Fuelle Izquierdo (cm):</label>
+                    <input type="number" id="fuelleIzq" step="0.1" oninput="calcularBase()">
+                </div>
+                <div class="form-group">
+                    <label for="fuelleDer">Fuelle Derecho (cm):</label>
+                    <input type="number" id="fuelleDer" step="0.1" oninput="calcularBase()">
+                </div>
+            </div>
+        </div>
+
+        <div class="switch-container">
+            <label for="impresa">Impresión</label>
+            <input type="checkbox" id="impresa" onchange="toggleImpresion()">
+        </div>
+        
+        <div id="opcionesImpresion" style="display: none;">
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="caras">Caras Impresas:</label>
+                    <select id="caras">
+                        <option value="1">1</option>
+                        <option value="2">2</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="colores">N° de Colores (Max 6):</label>
+                    <select id="colores">
+                        <option value="1">1</option><option value="2">2</option><option value="3">3</option>
+                        <option value="4">4</option><option value="5">5</option><option value="6">6</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div class="section-title">3. Datos del Pedido</div>
+        <div class="form-row">
+            <div class="form-group">
+                <label for="pesoEspecifico">Peso Específico:</label>
+                <input type="text" id="pesoEspecifico" class="input-calculado" readonly placeholder="0.00 g">
+            </div>
+            <div class="form-group">
+                <label for="pesoMillarKg">Peso Millar:</label>
+                <input type="text" id="pesoMillarKg" class="input-calculado" readonly placeholder="0.00 Kg">
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label for="cantidadBolsasInput">Bolsas:</label>
+                <input type="number" id="cantidadBolsasInput" placeholder="Cantidad" oninput="calcularDesdeBolsas()">
+            </div>
+            <div class="form-group">
+                <label for="cantidadKgInput">Kg:</label>
+                <input type="number" id="cantidadKgInput" placeholder="Peso" oninput="calcularDesdeKg()">
+            </div>
+        </div>
+
+        <div class="section-title">4. Finanzas</div>
+        <div class="form-row">
+            <div class="form-group">
+                <label for="precioKg">Precio por Kg ($):</label>
+                <input type="number" id="precioKg" step="0.01" oninput="calcularPreciosFinanzas()">
+            </div>
+            <div class="form-group">
+                <label for="precioMillarUSD">Precio Millar ($):</label>
+                <input type="text" id="precioMillarUSD" class="input-calculado" readonly placeholder="0.00 $">
+            </div>
+        </div>
+        <div class="form-group">
+            <label for="tasa">Tasa (Bs por $):</label>
+            <input type="number" id="tasa" step="0.01">
+        </div>
+
+        <button onclick="procesarPedido()">Calcular y Registrar Pedido</button>
+    </div>
+
+    <div class="table-container">
+        <table id="tablaRegistros">
+            <thead>
+                <tr>
+                    <th>Cliente</th>
+                    <th>Detalles</th>
+                    <th>Totales</th>
+                    <th>Acción</th>
+                </tr>
+            </thead>
+            <tbody id="listaVentas"></tbody>
+        </table>
+        <button class="btn-borrar" onclick="borrarHistorial()">Borrar Historial</button>
+    </div>
+
+    <script>
+        // Actualizamos la versión de la base de datos a V9 para limpiar formatos viejos
+        let ventas = JSON.parse(localStorage.getItem('ventasConaplastV9')) || [];
+        mostrarVentas();
+
+        function getPesoUnaBolsaKg() {
+            const ancho = parseFloat(document.getElementById('ancho').value) || 0;
+            const largo = parseFloat(document.getElementById('largo').value) || 0;
+            const espesor = parseFloat(document.getElementById('espesor').value) || 0;
+            const llevaFuelle = document.getElementById('llevaFuelle').checked;
+            const fI = llevaFuelle ? (parseFloat(document.getElementById('fuelleIzq').value) || 0) : 0;
+            const fD = llevaFuelle ? (parseFloat(document.getElementById('fuelleDer').value) || 0) : 0;
+            const densidad = 0.92;
+
+            if (ancho > 0 && largo > 0 && espesor > 0) {
+                const anchoTotal = fI + ancho + fD;
+                const pesoG = (anchoTotal * largo * (espesor * 2) * densidad);
+                return pesoG / 1000;
+            }
+            return 0;
+        }
+
+        function calcularBase() {
+            const pesoKg = getPesoUnaBolsaKg();
+            if (pesoKg > 0) {
+                document.getElementById('pesoEspecifico').value = (pesoKg * 1000).toFixed(2) + ' g';
+                document.getElementById('pesoMillarKg').value = (pesoKg * 1000).toFixed(2) + ' Kg';
+                if(document.getElementById('cantidadBolsasInput').value) calcularDesdeBolsas();
+                else if(document.getElementById('cantidadKgInput').value) calcularDesdeKg();
+            }
+            calcularPreciosFinanzas();
+        }
+
+        function calcularDesdeBolsas() {
+            const bolsas = parseFloat(document.getElementById('cantidadBolsasInput').value) || 0;
+            const pesoUnitario = getPesoUnaBolsaKg();
+            if (pesoUnitario > 0 && bolsas > 0) {
+                document.getElementById('cantidadKgInput').value = (bolsas * pesoUnitario).toFixed(2);
+            } else { document.getElementById('cantidadKgInput').value = ''; }
+        }
+
+        function calcularDesdeKg() {
+            const kg = parseFloat(document.getElementById('cantidadKgInput').value) || 0;
+            const pesoUnitario = getPesoUnaBolsaKg();
+            if (pesoUnitario > 0 && kg > 0) {
+                document.getElementById('cantidadBolsasInput').value = Math.floor(kg / pesoUnitario);
+            } else { document.getElementById('cantidadBolsasInput').value = ''; }
+        }
+
+        function calcularPreciosFinanzas() {
+            const pesoMillarKg = getPesoUnaBolsaKg() * 1000;
+            const precioKg = parseFloat(document.getElementById('precioKg').value) || 0;
+            if (pesoMillarKg > 0 && precioKg > 0) {
+                document.getElementById('precioMillarUSD').value = (pesoMillarKg * precioKg).toFixed(2) + ' $';
+            } else { document.getElementById('precioMillarUSD').value = ''; }
+        }
+
+        function toggleImpresion() { document.getElementById('opcionesImpresion').style.display = document.getElementById('impresa').checked ? 'block' : 'none'; }
+        function toggleFuelle() { document.getElementById('opcionesFuelle').style.display = document.getElementById('llevaFuelle').checked ? 'block' : 'none'; calcularBase(); }
+        function cerrarModal() { document.getElementById('modalResultado').style.display = 'none'; }
+
+        function procesarPedido() {
+            const cliente = document.getElementById('cliente').value;
+            const kgFinal = parseFloat(document.getElementById('cantidadKgInput').value);
+            const precioKg = parseFloat(document.getElementById('precioKg').value);
+            const tasa = parseFloat(document.getElementById('tasa').value);
+            const bolsasFinal = document.getElementById('cantidadBolsasInput').value;
+            
+            const ancho = document.getElementById('ancho').value;
+            const largo = document.getElementById('largo').value;
+            const esp = document.getElementById('espesor').value;
+            const llevaFuelle = document.getElementById('llevaFuelle').checked;
+            const fuelleIzq = document.getElementById('fuelleIzq').value;
+            const fuelleDer = document.getElementById('fuelleDer').value;
+            
+            if (!cliente || !kgFinal || !precioKg || !tasa || !ancho || !largo || !esp) { 
+                alert("⚠️ Completa los datos principales."); 
+                return; 
+            }
+
+            const totalUSD = kgFinal * precioKg;
+            const esImp = document.getElementById('impresa').checked;
+
+            // Construcción exacta de la cadena de medidas solicitada
+            const stringMedidas = llevaFuelle 
+                ? `${fuelleIzq}+${ancho}+${fuelleDer}*${largo}*${esp}` 
+                : `${ancho}*${largo}*${esp}`;
+
+            const nuevaVenta = {
+                cliente, 
+                rif: document.getElementById('rif').value || 'N/A',
+                medidas: stringMedidas,
+                esImpresa: esImp,
+                caras: esImp ? document.getElementById('caras').value : '0',
+                colores: esImp ? document.getElementById('colores').value : '0',
+                pesoKg: kgFinal.toFixed(2),
+                cantidadBolsas: parseInt(bolsasFinal).toLocaleString('es-VE'),
+                totalUSD: totalUSD.toFixed(2),
+                totalBs: (totalUSD * tasa).toFixed(2),
+                precioKg: precioKg,
+                tasa: tasa
+            };
+
+            ventas.unshift(nuevaVenta);
+            localStorage.setItem('ventasConaplastV9', JSON.stringify(ventas));
+            mostrarVentas();
+
+            document.getElementById('modalCuerpoTexto').innerHTML = `<strong>Kilos:</strong><br><span style="font-size:26px;color:#0F204C">${nuevaVenta.pesoKg} Kg</span><br><br><strong>Unidades:</strong><br><span style="font-size:26px;color:#0F204C">${nuevaVenta.cantidadBolsas}</span>`;
+            document.getElementById('modalResultado').style.display = 'flex';
+        }
+
+        function mostrarVentas() {
+            const tbody = document.getElementById('listaVentas');
+            tbody.innerHTML = ''; 
+            ventas.forEach((v, index) => {
+                const fila = document.createElement('tr');
+                fila.innerHTML = `<td><strong>${v.cliente}</strong></td>
+                    <td><small>${v.pesoKg} Kg / ${v.cantidadBolsas} uds</small><br><small style="color:gray">${v.medidas}</small></td>
+                    <td><span class="totales">$${v.totalUSD}</span></td>
+                    <td><button class="btn-wa" onclick="enviarWA(${index})">WA</button></td>`;
+                tbody.appendChild(fila);
+            });
+        }
+
+        function enviarWA(index) {
+            const v = ventas[index];
+            
+            // Si hay impresión, armamos el bloque. Si no, decimos "Sin impresión".
+            const detallesImpresion = v.esImpresa 
+                ? `\n\n🎨 *Detalles de Impresión:*\n• Caras: ${v.caras}\n• Colores: ${v.colores}`
+                : `\n\n🎨 *Detalles de Impresión:*\n• Sin impresión`;
+
+            const msg = `Hola, te saludo desde *Conaplast C.A.*\n\nAquí tienes la cotización de tu pedido:\n\n👤 *Cliente:* ${v.cliente}\n• RIF: ${v.rif}\n\n📦 *Especificaciones:*\n• Medidas: ${v.medidas}\n• Pedido total: ${v.pesoKg} Kg\n• Rendimiento aprox: ${v.cantidadBolsas} bolsas${detallesImpresion}\n\n💰 *Inversión total:*\n• Dólares: $${v.totalUSD} (a $${v.precioKg}/Kg)\n• Bolívares: Bs. ${v.totalBs} (Tasa: ${v.tasa})\n\nQuedamos a tu entera disposición.`;
+            
+            window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
+        }
+
+        function borrarHistorial() { if(confirm("¿Borrar historial?")) { ventas = []; localStorage.removeItem('ventasConaplastV9'); mostrarVentas(); } }
+    </script>
+</body>
+</html>
 
