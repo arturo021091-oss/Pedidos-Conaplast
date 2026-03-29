@@ -13,7 +13,6 @@
         .logo-container { text-align: center; margin-bottom: 10px; margin-top: 5px; }
         .logo-img { max-width: 220px; height: auto; }
         
-        /* Ajuste de Tabs para 4 opciones */
         .tabs { display: flex; background: #ffffff; border-radius: 12px; margin-bottom: 20px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
         .tab-btn { flex: 1; padding: 12px 2px; text-align: center; font-weight: bold; color: #8e8e93; cursor: pointer; border: none; background: transparent; font-size: 13px; transition: 0.3s; }
         .tab-btn.active { background: #0F204C; color: white; }
@@ -65,6 +64,14 @@
         
         .badge-pago { background: #34c759; color: white; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold; }
         .badge-deuda { background: #ff9500; color: white; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold; }
+
+        /* NUEVO: ESTILOS PARA ESTATUS DE PRODUCCIÓN */
+        .status-select { padding: 4px 2px; border-radius: 6px; font-size: 12px; font-weight: bold; border: 1px solid #d1d1d6; background: #f8f9fa; width: 100%; margin-top: 5px; color: #0F204C;}
+        .status-cola { border-color: #8e8e93; color: #8e8e93; }
+        .status-ext { border-color: #0284c7; color: #0284c7; background: #e0f2fe; }
+        .status-imp { border-color: #7c3aed; color: #7c3aed; background: #ede9fe; }
+        .status-sel { border-color: #ea580c; color: #ea580c; background: #ffedd5; }
+        .status-listo { border-color: #16a34a; color: #16a34a; background: #dcfce7; }
     </style>
 </head>
 <body>
@@ -202,8 +209,8 @@
             <button onclick="guardarOrdenProduccion()">Generar Orden de Producción</button>
         </div>
         <div class="table-container">
-            <h3 style="margin-top:0; color:#0F204C;">Órdenes en Planta</h3>
-            <table id="tablaProduccion"><thead><tr><th>Cliente / Máquinas</th><th>Mezcla</th><th>Acción</th></tr></thead><tbody id="listaProduccion"></tbody></table>
+            <h3 style="margin-top:0; color:#0F204C;">Control de Estatus en Planta</h3>
+            <table id="tablaProduccion"><thead><tr><th>Cliente / Estatus</th><th>Mezcla</th><th>Acción</th></tr></thead><tbody id="listaProduccion"></tbody></table>
             <button class="btn-borrar" onclick="borrarProduccion()">Borrar Todas las Órdenes</button>
         </div>
     </div>
@@ -274,17 +281,15 @@
     </div>
 
     <script>
-        // MEMORIA BASE
-        let ventas = JSON.parse(localStorage.getItem('ventasConaplastV21')) || [];
-        let ordenesProd = JSON.parse(localStorage.getItem('prodConaplastV12')) || []; 
-        let cuentasAdmin = JSON.parse(localStorage.getItem('adminConaplastV1')) || [];
+        // MEMORIA BASE ACTUALIZADA A V22 PARA EVITAR CONFLICTOS
+        let ventas = JSON.parse(localStorage.getItem('ventasConaplastV22')) || [];
+        let ordenesProd = JSON.parse(localStorage.getItem('prodConaplastV13')) || []; 
+        let cuentasAdmin = JSON.parse(localStorage.getItem('adminConaplastV2')) || [];
         
-        // MEMORIA INVENTARIO
         const listaMaterialesPlanta = ["FB3003", "FD0348", "Lineal 11PG1", "Lineal 11PG4", "7000F", "Recuperado Neutro", "Recuperado Negro", "Recuperado Agua Panela"];
         let inventario = JSON.parse(localStorage.getItem('inventarioConaplastV1'));
         if (!inventario) { inventario = listaMaterialesPlanta.map(mat => ({ nombre: mat, stock: 0 })); localStorage.setItem('inventarioConaplastV1', JSON.stringify(inventario)); }
 
-        // INICIO
         mostrarVentas(ventas);
         mostrarOrdenes();
         mostrarInventario(); 
@@ -302,124 +307,8 @@
         function formatearMoneda(valorNum) { return Number(valorNum).toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
 
         // ==========================================
-        // ADMINISTRACIÓN (NUEVA LÓGICA)
+        // COTIZACIÓN
         // ==========================================
-        let adminTotalRaw = 0;
-
-        function actualizarSelectPedidosAdmin() {
-            const sel = document.getElementById('selectPedidoAdmin'); sel.innerHTML = '<option value="">-- Selecciona un pedido --</option>';
-            ventas.forEach(v => { const opt = document.createElement('option'); opt.value = v.id; opt.text = `${v.cliente} - $${v.totalUSD}`; sel.appendChild(opt); });
-        }
-
-        function cargarDatosAdmin() {
-            const id = document.getElementById('selectPedidoAdmin').value;
-            const p = ventas.find(v => v.id === id);
-            
-            document.getElementById('rangoPrepago').value = 0;
-            
-            if (p) {
-                // Convertimos el string formateado de nuevo a número para cálculos
-                adminTotalRaw = parseFloat(p.totalUSD.replace(/\./g, '').replace(',', '.')); 
-                document.getElementById('adminTotal').value = '$ ' + p.totalUSD;
-                calcularCondiciones();
-            } else {
-                adminTotalRaw = 0;
-                document.getElementById('adminTotal').value = '';
-                document.getElementById('adminAbono').value = '';
-                document.getElementById('adminSaldo').value = '';
-                document.getElementById('lblPorcentaje').innerText = '0%';
-            }
-        }
-
-        function calcularCondiciones() {
-            if(adminTotalRaw === 0) return;
-            const porcentaje = parseInt(document.getElementById('rangoPrepago').value);
-            document.getElementById('lblPorcentaje').innerText = porcentaje + '%';
-            
-            const abono = adminTotalRaw * (porcentaje / 100);
-            const saldo = adminTotalRaw - abono;
-            
-            document.getElementById('adminAbono').value = '$ ' + formatearMoneda(abono);
-            document.getElementById('adminSaldo').value = '$ ' + formatearMoneda(saldo);
-        }
-
-        function guardarCondicionesAdmin() {
-            const id = document.getElementById('selectPedidoAdmin').value;
-            if (!id) { alert("⚠️ Selecciona un pedido para registrar."); return; }
-
-            const p = ventas.find(v => v.id === id);
-            const porcentaje = parseInt(document.getElementById('rangoPrepago').value);
-            const abono = adminTotalRaw * (porcentaje / 100);
-            const saldo = adminTotalRaw - abono;
-            const diasCredito = parseInt(document.getElementById('diasCredito').value);
-            
-            // Calcular fecha de vencimiento
-            let fechaVence = new Date();
-            fechaVence.setDate(fechaVence.getDate() + diasCredito);
-
-            const nC = {
-                idPedido: id,
-                cliente: p.cliente,
-                fechaRegistro: new Date().toLocaleDateString('es-VE'),
-                fechaVence: fechaVence.toLocaleDateString('es-VE'),
-                diasCredito: diasCredito,
-                total: adminTotalRaw,
-                abono: abono,
-                saldo: saldo,
-                porcentaje: porcentaje
-            };
-
-            cuentasAdmin.unshift(nC);
-            localStorage.setItem('adminConaplastV1', JSON.stringify(cuentasAdmin));
-            mostrarAdmin();
-            document.getElementById('modalCuerpoTexto').innerHTML = `<strong>Cuenta Registrada</strong><br><span style="font-size:16px;color:#0F204C">Crédito a ${diasCredito} días asignado</span>`;
-            document.getElementById('modalResultado').style.display = 'flex';
-        }
-
-        function mostrarAdmin() {
-            const tbody = document.getElementById('listaAdmin'); tbody.innerHTML = ''; 
-            cuentasAdmin.forEach((c, i) => {
-                const tr = document.createElement('tr');
-                const badge = c.saldo <= 0 ? `<span class="badge-pago">PAGADO</span>` : `<span class="badge-deuda">SALDO</span>`;
-                const diasInfo = c.diasCredito === 0 ? "Contado" : `Crédito: ${c.diasCredito}d<br><small>Vence: ${c.fechaVence}</small>`;
-
-                tr.innerHTML = `
-                    <td><span class="fecha-tag">${c.fechaRegistro}</span><strong>${c.cliente}</strong><br>${badge}</td>
-                    <td><small style="color:gray">${diasInfo}</small></td>
-                    <td><strong>$${formatearMoneda(c.saldo)}</strong><br><small style="color:#34c759">Abono: $${formatearMoneda(c.abono)}</small></td>
-                    <td>
-                        <button class="btn-wa" style="width:100%;" onclick="enviarCobroWA(${i})">Cobrar</button>
-                    </td>`;
-                tbody.appendChild(tr);
-            });
-        }
-
-        function enviarCobroWA(index) {
-            const c = cuentasAdmin[index];
-            if(c.saldo <= 0) { alert("Esta cuenta ya está totalmente pagada."); return; }
-            
-            const txtCredito = c.diasCredito === 0 ? `pago de contado` : `crédito a ${c.diasCredito} días (Vencimiento: ${c.fechaVence})`;
-            const msg = `Hola, te saludo desde el departamento de Administración de *Conaplast C.A.*\n\nTe escribimos para informarte el estatus de tu cuenta:\n\n👤 *Cliente:* ${c.cliente}\n💰 *Total del Pedido:* $${formatearMoneda(c.total)}\n✅ *Anticipo Recibido:* $${formatearMoneda(c.abono)} (${c.porcentaje}%)\n\n⚠️ *SALDO PENDIENTE: $${formatearMoneda(c.saldo)}*\n\n📌 *Condición:* ${txtCredito}.\n\nPor favor, envíanos el soporte de pago por esta vía cuando realices la transferencia. ¡Gracias por confiar en nosotros!`;
-            window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
-        }
-
-        function borrarAdmin() { if(confirm("¿Borrar todo el historial de cuentas por cobrar?")) { cuentasAdmin = []; localStorage.removeItem('adminConaplastV1'); mostrarAdmin(); } }
-
-
-        // ==========================================
-        // RESTO DE FUNCIONES (Inventario, Cotización, Producción)
-        // ==========================================
-        function mostrarInventario() {
-            const tbody = document.getElementById('listaInventario'); tbody.innerHTML = '';
-            inventario.forEach((item, index) => {
-                const colorStock = item.stock <= 50 ? '#ff3b30' : (item.stock < 300 ? '#ff9500' : '#34c759');
-                const tr = document.createElement('tr');
-                tr.innerHTML = `<td style="padding: 12px 0;"><strong>${item.nombre}</strong></td><td style="padding: 12px 0; font-size: 16px; font-weight: bold; color: ${colorStock};">${item.stock.toFixed(1)} Kg</td><td style="padding: 12px 0; text-align: right; display:flex; justify-content:flex-end; align-items:center; gap:5px;"><input type="number" id="mov_${index}" class="inv-input" placeholder="0"><button class="inv-btn" style="background-color: #34c759;" onclick="moverStock(${index}, 1)">+</button><button class="inv-btn" style="background-color: #ff3b30;" onclick="moverStock(${index}, -1)">-</button></td>`;
-                tbody.appendChild(tr);
-            });
-        }
-        function moverStock(index, factor) { const input = document.getElementById(`mov_${index}`); const valor = parseFloat(input.value); if(valor > 0) { inventario[index].stock += (valor * factor); localStorage.setItem('inventarioConaplastV1', JSON.stringify(inventario)); mostrarInventario(); } else { alert("⚠️ Ingresa un número válido."); } }
-
         function toggleTermo() {
             const isTermo = document.getElementById('esTermo').checked;
             document.getElementById('box-largo').style.display = isTermo ? 'none' : 'block'; document.getElementById('box-fuelle-switch').style.display = isTermo ? 'none' : 'flex';
@@ -455,22 +344,149 @@
             let strMedidas = isTermo ? `Bobina / Rollo | ${formato} | ${ancho}cm x ${esp}` : (llevaFuelle ? `${formato} | ${fI}+${ancho}+${fD}*${largo}*${esp}` : `${formato} | ${ancho}*${largo}*${esp}`);
             const totalUSDRaw = kgFinal * precioKg; const bolsasFinal = isTermo ? "Bobina Continua" : parseInt(document.getElementById('cantidadBolsasInput').value).toLocaleString('es-VE');
             const nuevaVenta = { id: Date.now().toString(), fecha: new Date().toLocaleDateString('es-VE'), cliente, rif: document.getElementById('rif').value || 'N/A', material: nombreMat, medidas: strMedidas, espesor: esp, esImpresa: esImp, caras: esImp ? document.getElementById('caras').value : '0', colores: esImp ? document.getElementById('colores').value : '0', pesoKg: kgFinal.toFixed(2), rawPesoKg: kgFinal, cantidadBolsas: bolsasFinal, isTermo: isTermo, totalUSD: formatearMoneda(totalUSDRaw), totalBs: formatearMoneda(totalUSDRaw * tasa), precioM: isTermo ? "N/A" : formatearMoneda(getPesoUnaBolsaKg() * 1000 * precioKg), rawPrecioKg: precioKg, rawTasa: tasa };
-            ventas.unshift(nuevaVenta); localStorage.setItem('ventasConaplastV21', JSON.stringify(ventas)); document.getElementById('buscador').value = ''; mostrarVentas(ventas); actualizarSelectPedidosProd(); actualizarSelectPedidosAdmin(); document.getElementById('modalCuerpoTexto').innerHTML = `<strong>Kilos:</strong><br><span style="font-size:26px;color:#0F204C">${nuevaVenta.pesoKg} Kg</span>`; document.getElementById('modalResultado').style.display = 'flex';
+            ventas.unshift(nuevaVenta); localStorage.setItem('ventasConaplastV22', JSON.stringify(ventas)); document.getElementById('buscador').value = ''; mostrarVentas(ventas); actualizarSelectPedidosProd(); actualizarSelectPedidosAdmin(); document.getElementById('modalCuerpoTexto').innerHTML = `<strong>Kilos:</strong><br><span style="font-size:26px;color:#0F204C">${nuevaVenta.pesoKg} Kg</span>`; document.getElementById('modalResultado').style.display = 'flex';
         }
 
         function filtrarVentas() { const txt = document.getElementById('buscador').value.toLowerCase(); mostrarVentas(ventas.filter(v => v.cliente.toLowerCase().includes(txt) || v.fecha.includes(txt))); }
         function mostrarVentas(arr) { const tbody = document.getElementById('listaVentas'); tbody.innerHTML = ''; arr.forEach((v, i) => { const tr = document.createElement('tr'); const infoRend = v.isTermo ? `<small style="color:#0369a1; font-weight:bold;">${v.cantidadBolsas}</small>` : `<small>${v.cantidadBolsas} uds</small><br><small style="color:#0F204C">Millar: $${v.precioM}</small>`; tr.innerHTML = `<td><span class="fecha-tag">${v.fecha}</span><strong>${v.cliente}</strong></td><td><small>${v.pesoKg} Kg</small><br>${infoRend}<br><small style="color:gray">${v.medidas}</small></td><td><span class="totales">$${v.totalUSD}</span></td><td><button class="btn-wa" onclick="enviarWA(${i})">WA</button></td>`; tbody.appendChild(tr); }); }
         function enviarWA(i) { const v = ventas[i]; const detImp = v.esImpresa ? `\n\n🎨 *Impresión:*\n• Caras: ${v.caras} / Colores: ${v.colores}` : `\n\n🎨 *Sin impresión*`; const rend = v.isTermo ? `\n• Formato: Bobina / Rollo` : `\n• Bolsas aprox: ${v.cantidadBolsas}`; const precM = v.isTermo ? `` : `\n• Precio Millar: $${v.precioM}`; const msg = `Cotización *Conaplast C.A.*\n\n👤 *Cliente:* ${v.cliente}\n• RIF: ${v.rif}\n\n📦 *Especificaciones:*\n• Material: ${v.material}\n• Medidas: ${v.medidas}\n• Pedido: ${v.pesoKg} Kg${rend}${detImp}\n\n💰 *Total:*${precM}\n• $${v.totalUSD} / Bs. ${v.totalBs}`; window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank'); }
 
+        // ==========================================
+        // PRODUCCIÓN Y ESTATUS (NUEVO)
+        // ==========================================
         function actualizarSelectPedidosProd() { const sel = document.getElementById('selectPedidoProd'); sel.innerHTML = '<option value="">-- Selecciona un pedido --</option>'; ventas.forEach(v => { const opt = document.createElement('option'); opt.value = v.id; opt.text = `${v.cliente} - ${v.pesoKg} Kg`; sel.appendChild(opt); }); }
-        function cargarDatosPedidoProd() { const id = document.getElementById('selectPedidoProd').value; const p = ventas.find(v => v.id === id); document.getElementById('obsExtrusion').value = ''; document.getElementById('obsImpresion').value = ''; document.getElementById('obsSellado').value = ''; if (p) { document.getElementById('prodKgTotal').value = p.pesoKg + ' Kg'; document.getElementById('prodBolsasTotal').value = p.isTermo ? "Bobina Continua" : p.cantidadBolsas + ' uds'; pedidoActualKg = p.rawPesoKg; document.getElementById('impMaquina').value = p.esImpresa ? "Impresora 1" : "N/A"; if (p.isTermo) { document.getElementById('sellMaquina').value = "N/A"; document.getElementById('sellTipo').value = "N/A"; } calcularMezcla(); } else { pedidoActualKg = 0; document.getElementById('prodKgTotal').value = ''; document.getElementById('prodBolsasTotal').value = ''; document.getElementById('mat1Kg').value = ''; document.getElementById('mat2Kg').value = ''; document.getElementById('recKg').value = ''; document.getElementById('adiKg').value = ''; document.getElementById('sumaControl').innerText = "Suma: 0%"; } }
+        
+        function cargarDatosPedidoProd() { 
+            const id = document.getElementById('selectPedidoProd').value; const p = ventas.find(v => v.id === id); 
+            document.getElementById('obsExtrusion').value = ''; document.getElementById('obsImpresion').value = ''; document.getElementById('obsSellado').value = ''; 
+            if (p) { 
+                document.getElementById('prodKgTotal').value = p.pesoKg + ' Kg'; 
+                document.getElementById('prodBolsasTotal').value = p.isTermo ? "Bobina Continua" : p.cantidadBolsas + ' uds'; 
+                pedidoActualKg = p.rawPesoKg; 
+                document.getElementById('impMaquina').value = p.esImpresa ? "Impresora 1" : "N/A"; 
+                if (p.isTermo) { document.getElementById('sellMaquina').value = "N/A"; document.getElementById('sellTipo').value = "N/A"; } 
+                calcularMezcla(); 
+            } else { 
+                pedidoActualKg = 0; document.getElementById('prodKgTotal').value = ''; document.getElementById('prodBolsasTotal').value = ''; 
+                document.getElementById('mat1Kg').value = ''; document.getElementById('mat2Kg').value = ''; document.getElementById('recKg').value = ''; document.getElementById('adiKg').value = ''; 
+                document.getElementById('sumaControl').innerText = "Suma: 0%"; 
+            } 
+        }
+
         function calcularMezcla() { if (pedidoActualKg === 0) return; const p1 = parseFloat(document.getElementById('mat1Pct').value) || 0; const p2 = parseFloat(document.getElementById('mat2Pct').value) || 0; const prec = parseFloat(document.getElementById('recPct').value) || 0; const pa = parseFloat(document.getElementById('adiPct').value) || 0; const suma = p1 + p2 + prec + pa; const ctrl = document.getElementById('sumaControl'); ctrl.innerText = `Suma: ${suma}%`; if (suma === 100) { ctrl.className = 'input-success'; document.getElementById('mat1Kg').value = ((p1/100)*pedidoActualKg).toFixed(1) + ' Kg'; document.getElementById('mat2Kg').value = ((p2/100)*pedidoActualKg).toFixed(1) + ' Kg'; document.getElementById('recKg').value = ((prec/100)*pedidoActualKg).toFixed(1) + ' Kg'; document.getElementById('adiKg').value = ((pa/100)*pedidoActualKg).toFixed(1) + ' Kg'; } else { ctrl.className = 'input-error'; document.getElementById('mat1Kg').value = 'Error'; document.getElementById('mat2Kg').value = 'Error'; document.getElementById('recKg').value = 'Error'; document.getElementById('adiKg').value = 'Error'; } }
-        function guardarOrdenProduccion() { const id = document.getElementById('selectPedidoProd').value; if (!id) { alert("⚠️ Selecciona un pedido cotizado."); return; } if (document.getElementById('sumaControl').innerText !== "Suma: 100%") { alert("🛑 La mezcla debe sumar 100%."); return; } const p = ventas.find(v => v.id === id); const m1Name = document.getElementById('mat1Nombre').value; const m1Kg = parseFloat(document.getElementById('mat1Kg').value); const m2Name = document.getElementById('mat2Nombre').value; const m2Kg = parseFloat(document.getElementById('mat2Kg').value); const recName = document.getElementById('recNombre').value; const recKg = parseFloat(document.getElementById('recKg').value); const nO = { idPedido: id, cliente: p.cliente, medidas: p.medidas, pesoKg: p.pesoKg, bolsas: p.isTermo ? "Bobina Continua" : p.cantidadBolsas, fecha: new Date().toLocaleDateString('es-VE'), caras: p.caras, colores: p.colores, extrusora: document.getElementById('extMaquina').value, mat1: m1Name ? `${m1Name}: ${document.getElementById('mat1Pct').value}% (${m1Kg.toFixed(1)} Kg)` : null, mat2: m2Name && document.getElementById('mat2Pct').value > 0 ? `${m2Name}: ${document.getElementById('mat2Pct').value}% (${m2Kg.toFixed(1)} Kg)` : null, rec: recName && document.getElementById('recPct').value > 0 ? `${recName}: ${document.getElementById('recPct').value}% (${recKg.toFixed(1)} Kg)` : null, aditivo: document.getElementById('adiPct').value > 0 ? `${document.getElementById('adiNombre').value || 'Aditivo'}: ${document.getElementById('adiPct').value}% (${document.getElementById('adiKg').value})` : null, obsExt: document.getElementById('obsExtrusion').value.trim(), impresora: document.getElementById('impMaquina').value, obsImp: document.getElementById('obsImpresion').value.trim(), selladora: document.getElementById('sellMaquina').value, selladoTipo: document.getElementById('sellTipo').value, obsSel: document.getElementById('obsSellado').value.trim() }; ordenesProd.unshift(nO); localStorage.setItem('prodConaplastV12', JSON.stringify(ordenesProd)); mostrarOrdenes(); document.getElementById('modalCuerpoTexto').innerHTML = `<strong>Orden Generada</strong><br><span style="font-size:16px;color:#0F204C">Guardada con éxito</span>`; document.getElementById('modalResultado').style.display = 'flex'; }
-        function mostrarOrdenes() { const tbody = document.getElementById('listaProduccion'); tbody.innerHTML = ''; ordenesProd.forEach((o, i) => { const tr = document.createElement('tr'); let mz = `<li>${o.mat1}</li>`; if(o.mat2) mz += `<li>${o.mat2}</li>`; if(o.rec) mz += `<li>${o.rec}</li>`; if(o.aditivo) mz += `<li>${o.aditivo}</li>`; tr.innerHTML = `<td><span class="fecha-tag">${o.fecha}</span><strong>${o.cliente}</strong> (${o.pesoKg} Kg)<br><span class="tag-maquina">EXT: ${o.extrusora.replace('Extrusora ','E')}</span>${o.impresora !== 'N/A' ? `<span class="tag-maquina">IMP: ${o.impresora.replace('Impresora ','I')}</span>` : ''}${o.selladora !== 'N/A' ? `<span class="tag-maquina">SEL: ${o.selladora.replace('Selladora ','S')} (${o.selladoTipo.charAt(0)})</span>` : '<span class="tag-maquina" style="background:#bae6fd;">BOBINA</span>'}</td><td><ul style="margin:0; padding-left:15px; font-size:12px; color:gray;">${mz}</ul></td><td><div class="btn-action-group"><button class="btn-wa" style="flex:1;" onclick="enviarWAProd(${i})">WA</button><button class="btn-borrar" style="margin-top:0; padding: 8px; flex:0.5;" onclick="eliminarOrden(${i})">X</button></div></td>`; tbody.appendChild(tr); }); }
+        
+        function guardarOrdenProduccion() { 
+            const id = document.getElementById('selectPedidoProd').value; if (!id) { alert("⚠️ Selecciona un pedido cotizado."); return; } if (document.getElementById('sumaControl').innerText !== "Suma: 100%") { alert("🛑 La mezcla debe sumar 100%."); return; } 
+            const p = ventas.find(v => v.id === id); 
+            const m1Name = document.getElementById('mat1Nombre').value; const m1Kg = parseFloat(document.getElementById('mat1Kg').value); const m2Name = document.getElementById('mat2Nombre').value; const m2Kg = parseFloat(document.getElementById('mat2Kg').value); const recName = document.getElementById('recNombre').value; const recKg = parseFloat(document.getElementById('recKg').value); 
+            
+            const nO = { 
+                idPedido: id, cliente: p.cliente, medidas: p.medidas, pesoKg: p.pesoKg, bolsas: p.isTermo ? "Bobina Continua" : p.cantidadBolsas, fecha: new Date().toLocaleDateString('es-VE'), 
+                caras: p.caras, colores: p.colores, isTermo: p.isTermo, // Guardamos isTermo para las rutas
+                status: 'En Cola', // NUEVO: Estatus inicial
+                produccionReal: null, // NUEVO: Campo para el reporte final
+
+                extrusora: document.getElementById('extMaquina').value, mat1: m1Name ? `${m1Name}: ${document.getElementById('mat1Pct').value}% (${m1Kg.toFixed(1)} Kg)` : null, mat2: m2Name && document.getElementById('mat2Pct').value > 0 ? `${m2Name}: ${document.getElementById('mat2Pct').value}% (${m2Kg.toFixed(1)} Kg)` : null, rec: recName && document.getElementById('recPct').value > 0 ? `${recName}: ${document.getElementById('recPct').value}% (${recKg.toFixed(1)} Kg)` : null, aditivo: document.getElementById('adiPct').value > 0 ? `${document.getElementById('adiNombre').value || 'Aditivo'}: ${document.getElementById('adiPct').value}% (${document.getElementById('adiKg').value})` : null, obsExt: document.getElementById('obsExtrusion').value.trim(), 
+                impresora: document.getElementById('impMaquina').value, obsImp: document.getElementById('obsImpresion').value.trim(), 
+                selladora: document.getElementById('sellMaquina').value, selladoTipo: document.getElementById('sellTipo').value, obsSel: document.getElementById('obsSellado').value.trim() 
+            }; 
+            ordenesProd.unshift(nO); localStorage.setItem('prodConaplastV13', JSON.stringify(ordenesProd)); mostrarOrdenes(); 
+            document.getElementById('modalCuerpoTexto').innerHTML = `<strong>Orden Generada</strong><br><span style="font-size:16px;color:#0F204C">Enviada a Cola de Producción</span>`; document.getElementById('modalResultado').style.display = 'flex'; 
+        }
+
+        // FUNCIÓN PARA CAMBIAR ESTATUS
+        function cambiarStatus(index, nuevoStatus) {
+            const o = ordenesProd[index];
+            
+            if (nuevoStatus === 'Listo') {
+                const term = o.selladora === 'N/A' ? 'kilos/bobinas' : 'bolsas';
+                const cant = prompt(`¡Pedido terminado! ¿Cuál fue la producción real final (${term})?`);
+                if (cant && cant.trim() !== "") {
+                    o.status = nuevoStatus;
+                    o.produccionReal = cant;
+                } else {
+                    // Si cancela, devuelve la tabla visualmente al estado anterior sin guardar cambios
+                    mostrarOrdenes(); 
+                    return;
+                }
+            } else {
+                o.status = nuevoStatus;
+                o.produccionReal = null; // Borra la producción final si lo regresan de estatus
+            }
+            localStorage.setItem('prodConaplastV13', JSON.stringify(ordenesProd));
+            mostrarOrdenes();
+        }
+
+        function getStatusClase(status) {
+            if(status === 'Extrusión') return 'status-ext';
+            if(status === 'Impresión') return 'status-imp';
+            if(status === 'Sellado') return 'status-sel';
+            if(status === 'Listo') return 'status-listo';
+            return 'status-cola';
+        }
+
+        function mostrarOrdenes() { 
+            const tbody = document.getElementById('listaProduccion'); tbody.innerHTML = ''; 
+            ordenesProd.forEach((o, i) => { 
+                const tr = document.createElement('tr'); 
+                let mz = `<li>${o.mat1}</li>`; if(o.mat2) mz += `<li>${o.mat2}</li>`; if(o.rec) mz += `<li>${o.rec}</li>`; if(o.aditivo) mz += `<li>${o.aditivo}</li>`; 
+                
+                // Aseguramos que las órdenes viejas tengan estatus
+                const currentStatus = o.status || 'En Cola';
+                const claseStatus = getStatusClase(currentStatus);
+
+                // Opciones del menú dinámicas según la ruta del producto
+                let opcionesHTML = `<option value="En Cola" ${currentStatus==='En Cola'?'selected':''}>⏳ En Cola</option>
+                                    <option value="Extrusión" ${currentStatus==='Extrusión'?'selected':''}>⚙️ Extrusión</option>`;
+                
+                if(o.impresora !== 'N/A') {
+                    opcionesHTML += `<option value="Impresión" ${currentStatus==='Impresión'?'selected':''}>🖨️ Impresión</option>`;
+                }
+                if(o.selladora !== 'N/A') {
+                    opcionesHTML += `<option value="Sellado" ${currentStatus==='Sellado'?'selected':''}>✂️ Sellado</option>`;
+                }
+                opcionesHTML += `<option value="Listo" ${currentStatus==='Listo'?'selected':''}>✅ Listo</option>`;
+
+                // Texto de Producción Final Real
+                const textoProdFinal = o.produccionReal ? `<div style="color:#16a34a; font-size:12px; margin-top:6px; font-weight:bold; background:#dcfce7; padding:4px; border-radius:4px; text-align:center;">Prod. Real: ${o.produccionReal}</div>` : '';
+
+                tr.innerHTML = `
+                    <td>
+                        <span class="fecha-tag">${o.fecha}</span><strong>${o.cliente}</strong> (${o.pesoKg} Kg)<br>
+                        <select class="status-select ${claseStatus}" onchange="cambiarStatus(${i}, this.value)">
+                            ${opcionesHTML}
+                        </select>
+                        ${textoProdFinal}
+                    </td>
+                    <td><ul style="margin:0; padding-left:15px; font-size:12px; color:gray;">${mz}</ul></td>
+                    <td>
+                        <div class="btn-action-group">
+                            <button class="btn-wa" style="flex:1;" onclick="enviarWAProd(${i})">WA</button>
+                            <button class="btn-borrar" style="margin-top:0; padding: 8px; flex:0.5;" onclick="eliminarOrden(${i})">X</button>
+                        </div>
+                    </td>`; 
+                tbody.appendChild(tr); 
+            }); 
+        }
+        
         function enviarWAProd(index) { const o = ordenesProd[index]; let mezclaTexto = `• ${o.mat1}`; if(o.mat2) mezclaTexto += `\n• ${o.mat2}`; if(o.rec) mezclaTexto += `\n• ${o.rec}`; if(o.aditivo) mezclaTexto += `\n• ${o.aditivo}`; let obsExt = o.obsExt ? `\n⚠️ *Obs:* _${o.obsExt}_` : ``; let obsImp = o.obsImp ? `\n⚠️ *Obs:* _${o.obsImp}_` : ``; let obsSel = o.obsSel ? `\n⚠️ *Obs:* _${o.obsSel}_` : ``; let detImp = (o.impresora !== 'N/A' && o.caras && o.colores) ? `\n• Caras: ${o.caras} | Colores: ${o.colores}` : ""; const tE = `⚙️ *1. EXTRUSIÓN:* ${o.extrusora}\n*Mezcla:*\n${mezclaTexto}${obsExt}`; const tI = `🖨️ *2. IMPRESIÓN:* ${o.impresora}${detImp}${obsImp}`; const tS = o.selladora === 'N/A' ? `✂️ *3. SELLADO:* No aplica (Bobina / Rollo)` : `✂️ *3. SELLADO:* ${o.selladora} (${o.selladoTipo})${obsSel}`; const msg = `🏭 *ORDEN DE PRODUCCIÓN - Conaplast C.A.*\n\n👤 *Cliente:* ${o.cliente}\n📦 *Pedido:* ${o.pesoKg} Kg | ${o.bolsas}\n📏 *Medidas:* ${o.medidas}\n\n${tE}\n\n${tI}\n\n${tS}`; window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank'); }
-        function eliminarOrden(i) { if(confirm("¿Borrar esta orden?")) { ordenesProd.splice(i, 1); localStorage.setItem('prodConaplastV12', JSON.stringify(ordenesProd)); mostrarOrdenes(); } }
-        function borrarHistorial() { if(confirm("¿Borrar todo el historial de Cotizaciones?")) { ventas = []; localStorage.removeItem('ventasConaplastV21'); mostrarVentas(ventas); } }
-        function borrarProduccion() { if(confirm("¿Borrar todas las órdenes?")) { ordenesProd = []; localStorage.removeItem('prodConaplastV12'); mostrarOrdenes(); } }
+        function eliminarOrden(i) { if(confirm("¿Borrar esta orden?")) { ordenesProd.splice(i, 1); localStorage.setItem('prodConaplastV13', JSON.stringify(ordenesProd)); mostrarOrdenes(); } }
+        function borrarHistorial() { if(confirm("¿Borrar todo el historial de Cotizaciones?")) { ventas = []; localStorage.removeItem('ventasConaplastV22'); mostrarVentas(ventas); } }
+        function borrarProduccion() { if(confirm("¿Borrar todas las órdenes?")) { ordenesProd = []; localStorage.removeItem('prodConaplastV13'); mostrarOrdenes(); } }
+
+        // ==========================================
+        // ADMINISTRACIÓN Y GALPÓN
+        // ==========================================
+        function mostrarInventario() { const tbody = document.getElementById('listaInventario'); tbody.innerHTML = ''; inventario.forEach((item, index) => { const colorStock = item.stock <= 50 ? '#ff3b30' : (item.stock < 300 ? '#ff9500' : '#34c759'); const tr = document.createElement('tr'); tr.innerHTML = `<td style="padding: 12px 0;"><strong>${item.nombre}</strong></td><td style="padding: 12px 0; font-size: 16px; font-weight: bold; color: ${colorStock};">${item.stock.toFixed(1)} Kg</td><td style="padding: 12px 0; text-align: right; display:flex; justify-content:flex-end; align-items:center; gap:5px;"><input type="number" id="mov_${index}" class="inv-input" placeholder="0"><button class="inv-btn" style="background-color: #34c759;" onclick="moverStock(${index}, 1)">+</button><button class="inv-btn" style="background-color: #ff3b30;" onclick="moverStock(${index}, -1)">-</button></td>`; tbody.appendChild(tr); }); }
+        function moverStock(index, factor) { const input = document.getElementById(`mov_${index}`); const valor = parseFloat(input.value); if(valor > 0) { inventario[index].stock += (valor * factor); localStorage.setItem('inventarioConaplastV1', JSON.stringify(inventario)); mostrarInventario(); } else { alert("⚠️ Ingresa un número válido."); } }
+
+        function actualizarSelectPedidosAdmin() { const sel = document.getElementById('selectPedidoAdmin'); sel.innerHTML = '<option value="">-- Selecciona un pedido --</option>'; ventas.forEach(v => { const opt = document.createElement('option'); opt.value = v.id; opt.text = `${v.cliente} - $${v.totalUSD}`; sel.appendChild(opt); }); }
+        function cargarDatosAdmin() { const id = document.getElementById('selectPedidoAdmin').value; const p = ventas.find(v => v.id === id); document.getElementById('rangoPrepago').value = 0; if (p) { adminTotalRaw = parseFloat(p.totalUSD.replace(/\./g, '').replace(',', '.')); document.getElementById('adminTotal').value = '$ ' + p.totalUSD; calcularCondiciones(); } else { adminTotalRaw = 0; document.getElementById('adminTotal').value = ''; document.getElementById('adminAbono').value = ''; document.getElementById('adminSaldo').value = ''; document.getElementById('lblPorcentaje').innerText = '0%'; } }
+        function calcularCondiciones() { if(adminTotalRaw === 0) return; const porcentaje = parseInt(document.getElementById('rangoPrepago').value); document.getElementById('lblPorcentaje').innerText = porcentaje + '%'; const abono = adminTotalRaw * (porcentaje / 100); const saldo = adminTotalRaw - abono; document.getElementById('adminAbono').value = '$ ' + formatearMoneda(abono); document.getElementById('adminSaldo').value = '$ ' + formatearMoneda(saldo); }
+        function guardarCondicionesAdmin() { const id = document.getElementById('selectPedidoAdmin').value; if (!id) { alert("⚠️ Selecciona un pedido para registrar."); return; } const p = ventas.find(v => v.id === id); const porcentaje = parseInt(document.getElementById('rangoPrepago').value); const abono = adminTotalRaw * (porcentaje / 100); const saldo = adminTotalRaw - abono; const diasCredito = parseInt(document.getElementById('diasCredito').value); let fechaVence = new Date(); fechaVence.setDate(fechaVence.getDate() + diasCredito); const nC = { idPedido: id, cliente: p.cliente, fechaRegistro: new Date().toLocaleDateString('es-VE'), fechaVence: fechaVence.toLocaleDateString('es-VE'), diasCredito: diasCredito, total: adminTotalRaw, abono: abono, saldo: saldo, porcentaje: porcentaje }; cuentasAdmin.unshift(nC); localStorage.setItem('adminConaplastV2', JSON.stringify(cuentasAdmin)); mostrarAdmin(); document.getElementById('modalCuerpoTexto').innerHTML = `<strong>Cuenta Registrada</strong><br><span style="font-size:16px;color:#0F204C">Crédito a ${diasCredito} días asignado</span>`; document.getElementById('modalResultado').style.display = 'flex'; }
+        function mostrarAdmin() { const tbody = document.getElementById('listaAdmin'); tbody.innerHTML = ''; cuentasAdmin.forEach((c, i) => { const tr = document.createElement('tr'); const badge = c.saldo <= 0 ? `<span class="badge-pago">PAGADO</span>` : `<span class="badge-deuda">SALDO</span>`; const diasInfo = c.diasCredito === 0 ? "Contado" : `Crédito: ${c.diasCredito}d<br><small>Vence: ${c.fechaVence}</small>`; tr.innerHTML = `<td><span class="fecha-tag">${c.fechaRegistro}</span><strong>${c.cliente}</strong><br>${badge}</td><td><small style="color:gray">${diasInfo}</small></td><td><strong>$${formatearMoneda(c.saldo)}</strong><br><small style="color:#34c759">Abono: $${formatearMoneda(c.abono)}</small></td><td><button class="btn-wa" style="width:100%;" onclick="enviarCobroWA(${i})">Cobrar</button></td>`; tbody.appendChild(tr); }); }
+        function enviarCobroWA(index) { const c = cuentasAdmin[index]; if(c.saldo <= 0) { alert("Esta cuenta ya está totalmente pagada."); return; } const txtCredito = c.diasCredito === 0 ? `pago de contado` : `crédito a ${c.diasCredito} días (Vencimiento: ${c.fechaVence})`; const msg = `Hola, te saludo desde Administración de *Conaplast C.A.*\n\nTe escribimos para informarte el estatus de tu cuenta:\n\n👤 *Cliente:* ${c.cliente}\n💰 *Total del Pedido:* $${formatearMoneda(c.total)}\n✅ *Anticipo:* $${formatearMoneda(c.abono)} (${c.porcentaje}%)\n\n⚠️ *SALDO PENDIENTE: $${formatearMoneda(c.saldo)}*\n\n📌 *Condición:* ${txtCredito}.\n\nPor favor, envíanos el soporte de pago por esta vía. ¡Gracias por confiar en nosotros!`; window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank'); }
+        function borrarAdmin() { if(confirm("¿Borrar todo el historial de cuentas por cobrar?")) { cuentasAdmin = []; localStorage.removeItem('adminConaplastV2'); mostrarAdmin(); } }
     </script>
 </body>
 </html>
