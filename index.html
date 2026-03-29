@@ -3,9 +3,6 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="theme-color" content="#0F204C">
-    <link rel="apple-touch-icon" href="logo.png">
-    
     <title>Conaplast C.A.</title>
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; padding: 15px; background: linear-gradient(135deg, #0f204c 0%, #1e3a8a 50%, #0f204c 100%); background-attachment: fixed; margin: 0; position: relative; overflow-x: hidden; }
@@ -16,7 +13,6 @@
         .logo-container { text-align: center; margin-bottom: 10px; margin-top: 5px; }
         .logo-img { max-width: 220px; height: auto; }
         
-        /* SISTEMA DE PESTAÑAS (TABS) */
         .tabs { display: flex; background: #ffffff; border-radius: 12px; margin-bottom: 20px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
         .tab-btn { flex: 1; padding: 15px; text-align: center; font-weight: bold; color: #8e8e93; cursor: pointer; border: none; background: transparent; font-size: 15px; transition: 0.3s; }
         .tab-btn.active { background: #0F204C; color: white; }
@@ -43,8 +39,8 @@
         button { background-color: #0F204C; color: white; border: none; padding: 14px; border-radius: 8px; font-weight: bold; font-size: 16px; width: 100%; cursor: pointer; margin-top: 10px; }
         button:active { background-color: #0B193C; }
         .btn-borrar { background-color: #ff3b30; margin-top: 20px; }
-        .btn-excel { background-color: #34c759; margin-top: 10px; }
         .btn-wa { background-color: #25D366; padding: 8px 12px; font-size: 14px; margin-top: 0; border-radius: 6px; }
+        .btn-action-group { display: flex; gap: 5px; margin-top: 5px; }
         
         .table-container { overflow-x: auto; background: white; border-radius: 12px; padding: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
         .buscador { margin-bottom: 15px; padding: 10px; width: 100%; border-radius: 8px; border: 1px solid #0F204C; font-size: 14px; }
@@ -59,7 +55,7 @@
         .modal-title { margin-top: 0; color: #0F204C; font-size: 22px; margin-bottom: 15px; }
         .modal-text { font-size: 18px; color: #1c1c1e; margin: 10px 0; line-height: 1.4; }
         .modal-btn { background-color: #0F204C; margin-top: 20px; }
-        .tag-maquina { background: #e5e5ea; padding: 3px 6px; border-radius: 4px; font-size: 11px; font-weight: bold; color: #1c1c1e; margin-right: 5px;}
+        .tag-maquina { background: #e5e5ea; padding: 3px 6px; border-radius: 4px; font-size: 11px; font-weight: bold; color: #1c1c1e; margin-right: 5px; display: inline-block; margin-bottom: 3px;}
     </style>
 </head>
 <body>
@@ -173,8 +169,14 @@
 
             <div class="form-row">
                 <div class="form-group" style="flex: 2;"><label>Material 2 (Opcional):</label><input type="text" id="mat2Nombre" placeholder="Ej: 11pg1"></div>
-                <div class="form-group"><label>%</label><input type="number" id="mat2Pct" value="28" oninput="calcularMezcla()"></div>
+                <div class="form-group"><label>%</label><input type="number" id="mat2Pct" value="0" oninput="calcularMezcla()"></div>
                 <div class="form-group"><label>Kilos</label><input type="text" id="mat2Kg" class="input-calculado" readonly></div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group" style="flex: 2;"><label>Material Recuperado:</label><input type="text" id="recNombre" placeholder="Ej: Recuperado Baja" value="Recuperado"></div>
+                <div class="form-group"><label>%</label><input type="number" id="recPct" value="28" oninput="calcularMezcla()"></div>
+                <div class="form-group"><label>Kilos</label><input type="text" id="recKg" class="input-calculado" readonly></div>
             </div>
 
             <div class="form-row">
@@ -206,7 +208,7 @@
 
     <script>
         let ventas = JSON.parse(localStorage.getItem('ventasConaplastV12')) || [];
-        let ordenesProd = JSON.parse(localStorage.getItem('prodConaplastV2')) || [];
+        let ordenesProd = JSON.parse(localStorage.getItem('prodConaplastV3')) || []; // V3 para aplicar los cambios de recuperado
         
         mostrarVentas(ventas);
         mostrarOrdenes();
@@ -292,7 +294,7 @@
             const nuevaVenta = {
                 id: Date.now().toString(), fecha: new Date().toLocaleDateString('es-VE'), cliente, rif: document.getElementById('rif').value || 'N/A', 
                 material: nombreMat, medidas: strMedidas, espesor: esp, esImpresa: esImp, caras: esImp ? document.getElementById('caras').value : '0', colores: esImp ? document.getElementById('colores').value : '0',
-                pesoKg: kgFinal.toFixed(2), rawPesoKg: kgFinal, cantidadBolsas: parseInt(bolsasFinal).toLocaleString('es-VE'),
+                pesoKg: kgFinal.toFixed(2), rawPesoKg: kgFinal, cantidadBolsas: parseInt(bolsasFinal).toLocaleString('es-VE'), rawBolsas: bolsasFinal,
                 totalUSD: formatearMoneda(totalUSDRaw), totalBs: formatearMoneda(totalUSDRaw * tasa), precioM: formatearMoneda(getPesoUnaBolsaKg() * 1000 * precioKg),
                 rawPrecioKg: precioKg, rawTasa: tasa
             };
@@ -330,6 +332,9 @@
 
         // LÓGICA DE PRODUCCIÓN
         let pedidoActualKg = 0;
+        let pedidoActualBolsas = 0;
+        let pedidoActualMedidas = "";
+
         function actualizarSelectPedidosProd() {
             const sel = document.getElementById('selectPedidoProd'); sel.innerHTML = '<option value="">-- Selecciona un pedido --</option>';
             ventas.forEach(v => { const opt = document.createElement('option'); opt.value = v.id; opt.text = `${v.cliente} - ${v.pesoKg} Kg`; sel.appendChild(opt); });
@@ -342,28 +347,40 @@
                 document.getElementById('prodKgTotal').value = p.pesoKg + ' Kg';
                 document.getElementById('prodBolsasTotal').value = p.cantidadBolsas + ' uds';
                 pedidoActualKg = p.rawPesoKg;
+                pedidoActualBolsas = p.cantidadBolsas;
+                pedidoActualMedidas = p.medidas;
                 document.getElementById('impMaquina').value = p.esImpresa ? "Impresora 1" : "N/A";
                 calcularMezcla();
             } else {
                 pedidoActualKg = 0; document.getElementById('prodKgTotal').value = ''; document.getElementById('prodBolsasTotal').value = '';
-                document.getElementById('mat1Kg').value = ''; document.getElementById('mat2Kg').value = ''; document.getElementById('adiKg').value = '';
+                document.getElementById('mat1Kg').value = ''; document.getElementById('mat2Kg').value = ''; 
+                document.getElementById('recKg').value = ''; document.getElementById('adiKg').value = '';
                 document.getElementById('sumaControl').innerText = "Suma: 0%";
             }
         }
 
         function calcularMezcla() {
             if (pedidoActualKg === 0) return;
-            const p1 = parseFloat(document.getElementById('mat1Pct').value) || 0, p2 = parseFloat(document.getElementById('mat2Pct').value) || 0, pa = parseFloat(document.getElementById('adiPct').value) || 0;
-            const suma = p1 + p2 + pa;
+            const p1 = parseFloat(document.getElementById('mat1Pct').value) || 0;
+            const p2 = parseFloat(document.getElementById('mat2Pct').value) || 0;
+            const prec = parseFloat(document.getElementById('recPct').value) || 0;
+            const pa = parseFloat(document.getElementById('adiPct').value) || 0;
+            
+            const suma = p1 + p2 + prec + pa;
             const ctrl = document.getElementById('sumaControl'); ctrl.innerText = `Suma: ${suma}%`;
             
             if (suma === 100) {
                 ctrl.className = 'input-success';
                 document.getElementById('mat1Kg').value = ((p1/100)*pedidoActualKg).toFixed(1) + ' Kg';
                 document.getElementById('mat2Kg').value = ((p2/100)*pedidoActualKg).toFixed(1) + ' Kg';
+                document.getElementById('recKg').value = ((prec/100)*pedidoActualKg).toFixed(1) + ' Kg';
                 document.getElementById('adiKg').value = ((pa/100)*pedidoActualKg).toFixed(1) + ' Kg';
             } else {
-                ctrl.className = 'input-error'; document.getElementById('mat1Kg').value = 'Error'; document.getElementById('mat2Kg').value = 'Error'; document.getElementById('adiKg').value = 'Error';
+                ctrl.className = 'input-error'; 
+                document.getElementById('mat1Kg').value = 'Error'; 
+                document.getElementById('mat2Kg').value = 'Error'; 
+                document.getElementById('recKg').value = 'Error';
+                document.getElementById('adiKg').value = 'Error';
             }
         }
 
@@ -374,15 +391,16 @@
 
             const p = ventas.find(v => v.id === id);
             const nO = {
-                idPedido: id, cliente: p.cliente, medidas: p.medidas, pesoKg: p.pesoKg, fecha: new Date().toLocaleDateString('es-VE'),
+                idPedido: id, cliente: p.cliente, medidas: p.medidas, pesoKg: p.pesoKg, bolsas: p.cantidadBolsas, fecha: new Date().toLocaleDateString('es-VE'),
                 extrusora: document.getElementById('extMaquina').value,
                 mat1: `${document.getElementById('mat1Nombre').value || 'Mat 1'}: ${document.getElementById('mat1Pct').value}% (${document.getElementById('mat1Kg').value})`,
                 mat2: document.getElementById('mat2Pct').value > 0 ? `${document.getElementById('mat2Nombre').value || 'Mat 2'}: ${document.getElementById('mat2Pct').value}% (${document.getElementById('mat2Kg').value})` : null,
+                rec: document.getElementById('recPct').value > 0 ? `${document.getElementById('recNombre').value || 'Recuperado'}: ${document.getElementById('recPct').value}% (${document.getElementById('recKg').value})` : null,
                 aditivo: document.getElementById('adiPct').value > 0 ? `${document.getElementById('adiNombre').value || 'Aditivo'}: ${document.getElementById('adiPct').value}% (${document.getElementById('adiKg').value})` : null,
                 impresora: document.getElementById('impMaquina').value, selladora: document.getElementById('sellMaquina').value, selladoTipo: document.getElementById('sellTipo').value
             };
 
-            ordenesProd.unshift(nO); localStorage.setItem('prodConaplastV2', JSON.stringify(ordenesProd)); mostrarOrdenes();
+            ordenesProd.unshift(nO); localStorage.setItem('prodConaplastV3', JSON.stringify(ordenesProd)); mostrarOrdenes();
             document.getElementById('modalCuerpoTexto').innerHTML = `<strong>Orden Generada</strong><br><span style="font-size:18px;color:#0F204C">Enviado a ${nO.extrusora}</span>`;
             document.getElementById('modalResultado').style.display = 'flex';
         }
@@ -391,20 +409,43 @@
             const tbody = document.getElementById('listaProduccion'); tbody.innerHTML = ''; 
             ordenesProd.forEach((o, i) => {
                 const tr = document.createElement('tr');
-                let mz = `<li>${o.mat1}</li>`; if(o.mat2) mz += `<li>${o.mat2}</li>`; if(o.aditivo) mz += `<li>${o.aditivo}</li>`;
+                let mz = `<li>${o.mat1}</li>`; 
+                if(o.mat2) mz += `<li>${o.mat2}</li>`; 
+                if(o.rec) mz += `<li>${o.rec}</li>`;
+                if(o.aditivo) mz += `<li>${o.aditivo}</li>`;
+
                 tr.innerHTML = `<td><span class="fecha-tag">${o.fecha}</span><strong>${o.cliente}</strong> (${o.pesoKg} Kg)<br>
                     <span class="tag-maquina">EXT: ${o.extrusora.replace('Extrusora ','E')}</span>
                     ${o.impresora !== 'N/A' ? `<span class="tag-maquina">IMP: ${o.impresora.replace('Impresora ','I')}</span>` : ''}
                     <span class="tag-maquina">SEL: ${o.selladora.replace('Selladora ','S')} (${o.selladoTipo.charAt(0)})</span></td>
                     <td><ul style="margin:0; padding-left:15px; font-size:12px; color:gray;">${mz}</ul></td>
-                    <td><button class="btn-borrar" style="margin-top:0; padding: 8px;" onclick="eliminarOrden(${i})">X</button></td>`;
+                    <td>
+                        <div class="btn-action-group">
+                            <button class="btn-wa" style="flex:1;" onclick="enviarWAProd(${i})">WA</button>
+                            <button class="btn-borrar" style="margin-top:0; padding: 8px; flex:0.5;" onclick="eliminarOrden(${i})">X</button>
+                        </div>
+                    </td>`;
                 tbody.appendChild(tr);
             });
         }
 
-        function eliminarOrden(i) { if(confirm("¿Borrar esta orden?")) { ordenesProd.splice(i, 1); localStorage.setItem('prodConaplastV2', JSON.stringify(ordenesProd)); mostrarOrdenes(); } }
+        // NUEVO: Función para enviar la Orden de Producción por WhatsApp
+        function enviarWAProd(index) {
+            const o = ordenesProd[index];
+            
+            let mezclaTexto = `• ${o.mat1}`;
+            if(o.mat2) mezclaTexto += `\n• ${o.mat2}`;
+            if(o.rec) mezclaTexto += `\n• ${o.rec}`;
+            if(o.aditivo) mezclaTexto += `\n• ${o.aditivo}`;
+
+            const msg = `🏭 *ORDEN DE PRODUCCIÓN - Conaplast C.A.*\n\n👤 *Cliente:* ${o.cliente}\n📦 *Pedido:* ${o.pesoKg} Kg | ${o.bolsas} uds\n📏 *Medidas:* ${o.medidas}\n\n⚙️ *1. EXTRUSIÓN:* ${o.extrusora}\n*Mezcla:*\n${mezclaTexto}\n\n🖨️ *2. IMPRESIÓN:* ${o.impresora}\n\n✂️ *3. SELLADO:* ${o.selladora} (${o.selladoTipo})`;
+            
+            window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
+        }
+
+        function eliminarOrden(i) { if(confirm("¿Borrar esta orden?")) { ordenesProd.splice(i, 1); localStorage.setItem('prodConaplastV3', JSON.stringify(ordenesProd)); mostrarOrdenes(); } }
         function borrarHistorial() { if(confirm("¿Borrar todo el historial de Cotizaciones?")) { ventas = []; localStorage.removeItem('ventasConaplastV12'); mostrarVentas(ventas); } }
-        function borrarProduccion() { if(confirm("¿Borrar todas las órdenes de producción?")) { ordenesProd = []; localStorage.removeItem('prodConaplastV2'); mostrarOrdenes(); } }
+        function borrarProduccion() { if(confirm("¿Borrar todas las órdenes de producción?")) { ordenesProd = []; localStorage.removeItem('prodConaplastV3'); mostrarOrdenes(); } }
     </script>
 </body>
 </html>
