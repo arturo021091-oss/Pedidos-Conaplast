@@ -167,6 +167,17 @@
         
         <div class="form-row">
             <div class="form-group">
+                <label for="pesoEspecifico">Peso Específico:</label>
+                <input type="text" id="pesoEspecifico" class="input-calculado" readonly placeholder="0.00 g">
+            </div>
+            <div class="form-group">
+                <label for="pesoMillarKg">Peso Millar:</label>
+                <input type="text" id="pesoMillarKg" class="input-calculado" readonly placeholder="0.00 Kg">
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
                 <label for="cantidadBolsasInput">Unidades a Producir:</label>
                 <input type="number" id="cantidadBolsasInput" placeholder="Ej: 50000" oninput="calcularDesdeBolsas()">
             </div>
@@ -183,9 +194,13 @@
                 <input type="number" id="precioKg" step="0.01" oninput="calcularBase()">
             </div>
             <div class="form-group">
-                <label for="tasa">Tasa (Bs por $):</label>
-                <input type="number" id="tasa" step="0.01">
+                <label for="precioMillarUSD">Precio Millar ($):</label>
+                <input type="text" id="precioMillarUSD" class="input-calculado" readonly placeholder="0.00 $">
             </div>
+        </div>
+        <div class="form-group">
+            <label for="tasa">Tasa (Bs por $):</label>
+            <input type="number" id="tasa" step="0.01">
         </div>
 
         <button onclick="procesarPedido()">Calcular y Registrar Pedido</button>
@@ -211,16 +226,19 @@
     </div>
 
     <script>
-        let ventas = JSON.parse(localStorage.getItem('ventasConaplastV10')) || [];
+        // Actualizamos versión para evitar choques con el formato de moneda nuevo
+        let ventas = JSON.parse(localStorage.getItem('ventasConaplastV11')) || [];
         mostrarVentas(ventas);
 
-        // Registro del Service Worker para funcionamiento Offline (App Nativa)
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js')
-                .then(reg => console.log('App Offline lista'))
-                .catch(err => console.log('Error instalando App Offline', err));
+                navigator.serviceWorker.register('sw.js').catch(err => console.log('SW error', err));
             });
+        }
+
+        // Función para formatear moneda con puntos y comas estilo Venezuela
+        function formatearMoneda(valorNum) {
+            return Number(valorNum).toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         }
 
         function getPesoUnaBolsaKg() {
@@ -231,7 +249,6 @@
             const fI = llevaFuelle ? (parseFloat(document.getElementById('fuelleIzq').value) || 0) : 0;
             const fD = llevaFuelle ? (parseFloat(document.getElementById('fuelleDer').value) || 0) : 0;
             
-            // Extraer densidad del selector de material
             const materialValue = document.getElementById('material').value;
             const densidad = parseFloat(materialValue.split('|')[0]);
 
@@ -243,8 +260,20 @@
         }
 
         function calcularBase() {
+            const pesoKg = getPesoUnaBolsaKg();
+            if (pesoKg > 0) {
+                // RESTAURADO: Llena los cuadros grises de Peso
+                document.getElementById('pesoEspecifico').value = (pesoKg * 1000).toFixed(2) + ' g';
+                document.getElementById('pesoMillarKg').value = (pesoKg * 1000).toFixed(2) + ' Kg';
+            } else {
+                document.getElementById('pesoEspecifico').value = '';
+                document.getElementById('pesoMillarKg').value = '';
+            }
+
             if(document.getElementById('cantidadBolsasInput').value) calcularDesdeBolsas();
             else if(document.getElementById('cantidadKgInput').value) calcularDesdeKg();
+
+            calcularPreciosFinanzas();
         }
 
         function calcularDesdeBolsas() {
@@ -261,6 +290,15 @@
             if (pesoUnitario > 0 && kg > 0) {
                 document.getElementById('cantidadBolsasInput').value = Math.floor(kg / pesoUnitario);
             } else { document.getElementById('cantidadBolsasInput').value = ''; }
+        }
+
+        function calcularPreciosFinanzas() {
+            const pesoMillarKg = getPesoUnaBolsaKg() * 1000;
+            const precioKg = parseFloat(document.getElementById('precioKg').value) || 0;
+            if (pesoMillarKg > 0 && precioKg > 0) {
+                // APLICANDO FORMATO VENEZOLANO AL PRECIO MILLAR
+                document.getElementById('precioMillarUSD').value = formatearMoneda(pesoMillarKg * precioKg) + ' $';
+            } else { document.getElementById('precioMillarUSD').value = ''; }
         }
 
         function toggleImpresion() { document.getElementById('opcionesImpresion').style.display = document.getElementById('impresa').checked ? 'block' : 'none'; }
@@ -281,7 +319,6 @@
             const fuelleIzq = document.getElementById('fuelleIzq').value;
             const fuelleDer = document.getElementById('fuelleDer').value;
             
-            // Extraer nombre del material
             const materialValue = document.getElementById('material').value;
             const nombreMaterial = materialValue.split('|')[1];
             
@@ -289,11 +326,16 @@
                 alert("⚠️ Completa los datos principales."); return; 
             }
 
-            const totalUSD = kgFinal * precioKg;
+            const totalUSDRaw = kgFinal * precioKg;
+            const totalBsRaw = totalUSDRaw * tasa;
             const esImp = document.getElementById('impresa').checked;
             const stringMedidas = llevaFuelle ? `${fuelleIzq}+${ancho}+${fuelleDer}*${largo}*${esp}` : `${ancho}*${largo}*${esp}`;
             
             const fechaHoy = new Date().toLocaleDateString('es-VE');
+            
+            // Calculo exacto del precio millar para guardarlo
+            const pesoUnitario = getPesoUnaBolsaKg();
+            const precioMillarRaw = pesoUnitario * 1000 * precioKg;
 
             const nuevaVenta = {
                 fecha: fechaHoy,
@@ -307,23 +349,29 @@
                 colores: esImp ? document.getElementById('colores').value : '0',
                 pesoKg: kgFinal.toFixed(2),
                 cantidadBolsas: parseInt(bolsasFinal).toLocaleString('es-VE'),
-                totalUSD: totalUSD.toFixed(2),
-                totalBs: (totalUSD * tasa).toFixed(2),
-                precioKg: precioKg,
-                tasa: tasa
+                
+                // Formateados para mostrar en pantalla y WhatsApp (ej: 1.250.500,50)
+                totalUSD: formatearMoneda(totalUSDRaw),
+                totalBs: formatearMoneda(totalBsRaw),
+                precioM: formatearMoneda(precioMillarRaw),
+                
+                // Valores crudos (sin puntos) para que el Excel pueda sumarlos
+                rawPrecioKg: precioKg,
+                rawTasa: tasa,
+                rawTotalUSD: totalUSDRaw,
+                rawTotalBs: totalBsRaw
             };
 
             ventas.unshift(nuevaVenta);
-            localStorage.setItem('ventasConaplastV10', JSON.stringify(ventas));
+            localStorage.setItem('ventasConaplastV11', JSON.stringify(ventas));
             
-            document.getElementById('buscador').value = ''; // Limpiar buscador
+            document.getElementById('buscador').value = ''; 
             mostrarVentas(ventas);
 
             document.getElementById('modalCuerpoTexto').innerHTML = `<strong>Kilos:</strong><br><span style="font-size:26px;color:#0F204C">${nuevaVenta.pesoKg} Kg</span><br><br><strong>Unidades:</strong><br><span style="font-size:26px;color:#0F204C">${nuevaVenta.cantidadBolsas}</span>`;
             document.getElementById('modalResultado').style.display = 'flex';
         }
 
-        // Filtro de Búsqueda
         function filtrarVentas() {
             const texto = document.getElementById('buscador').value.toLowerCase();
             const ventasFiltradas = ventas.filter(v => 
@@ -340,8 +388,8 @@
             arrayVentas.forEach((v, index) => {
                 const fila = document.createElement('tr');
                 fila.innerHTML = `<td><span class="fecha-tag">${v.fecha}</span><strong>${v.cliente}</strong></td>
-                    <td><small>${v.pesoKg} Kg / ${v.cantidadBolsas} uds</small><br><small style="color:gray">${v.medidas}</small></td>
-                    <td><span class="totales">$${v.totalUSD}</span></td>
+                    <td><small>${v.pesoKg} Kg / ${v.cantidadBolsas} uds</small><br><small style="color:gray">${v.medidas}</small><br><small style="color:#0F204C">Millar: $${v.precioM}</small></td>
+                    <td><span class="totales">$${v.totalUSD}</span><br><small>Bs. ${v.totalBs}</small></td>
                     <td><button class="btn-wa" onclick="enviarWA(${index})">WA</button></td>`;
                 tbody.appendChild(fila);
             });
@@ -350,16 +398,14 @@
         function enviarWA(index) {
             const v = ventas[index];
             const detallesImpresion = v.esImpresa ? `\n\n🎨 *Detalles de Impresión:*\n• Caras: ${v.caras}\n• Colores: ${v.colores}` : `\n\n🎨 *Detalles de Impresión:*\n• Sin impresión`;
-            const msg = `Hola, te saludo desde *Conaplast C.A.*\n\nAquí tienes la cotización de tu pedido:\n\n👤 *Cliente:* ${v.cliente}\n• RIF: ${v.rif}\n\n📦 *Especificaciones:*\n• Material: ${v.material}\n• Medidas: ${v.medidas}\n• Pedido total: ${v.pesoKg} Kg\n• Rendimiento aprox: ${v.cantidadBolsas} bolsas${detallesImpresion}\n\n💰 *Inversión total:*\n• Dólares: $${v.totalUSD} (a $${v.precioKg}/Kg)\n• Bolívares: Bs. ${v.totalBs} (Tasa: ${v.tasa})\n\nQuedamos a tu entera disposición.`;
+            const msg = `Hola, te saludo desde *Conaplast C.A.*\n\nAquí tienes la cotización de tu pedido:\n\n👤 *Cliente:* ${v.cliente}\n• RIF: ${v.rif}\n\n📦 *Especificaciones:*\n• Material: ${v.material}\n• Medidas: ${v.medidas}\n• Pedido total: ${v.pesoKg} Kg\n• Rendimiento aprox: ${v.cantidadBolsas} bolsas${detallesImpresion}\n\n💰 *Inversión total:*\n• Precio Millar: $${v.precioM}\n• Dólares: $${v.totalUSD} (a $${v.rawPrecioKg}/Kg)\n• Bolívares: Bs. ${v.totalBs} (Tasa: ${v.rawTasa})\n\nQuedamos a tu entera disposición.`;
             window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
         }
 
-        // Función para exportar los datos a Excel (CSV)
         function exportarExcel() {
             if(ventas.length === 0) { alert("No hay datos para exportar."); return; }
             
             let csvContent = "data:text/csv;charset=utf-8,";
-            // Cabeceras de Excel (Usamos punto y coma porque en Latinoamérica las comas son para decimales)
             csvContent += "Fecha;Cliente;RIF;Material;Medidas;Impresa;Caras;Colores;Kilos;Bolsas;Precio por Kg ($);Tasa (Bs);Total ($);Total (Bs)\n";
             
             ventas.forEach(v => {
@@ -367,11 +413,11 @@
                     v.fecha, v.cliente, v.rif, v.material, v.medidas, 
                     v.esImpresa ? "Si" : "No", v.caras, v.colores, 
                     v.pesoKg.replace('.', ','), 
-                    v.cantidadBolsas.replace(/\./g, ''), // Quitamos el punto de los miles para Excel
-                    v.precioKg.toString().replace('.', ','), 
-                    v.tasa.toString().replace('.', ','), 
-                    v.totalUSD.replace('.', ','), 
-                    v.totalBs.replace('.', ',')
+                    v.cantidadBolsas.replace(/\./g, ''), 
+                    v.rawPrecioKg.toString().replace('.', ','), 
+                    v.rawTasa.toString().replace('.', ','), 
+                    v.rawTotalUSD.toFixed(2).replace('.', ','), 
+                    v.rawTotalBs.toFixed(2).replace('.', ',')
                 ].join(";");
                 csvContent += fila + "\n";
             });
@@ -385,8 +431,7 @@
             document.body.removeChild(link);
         }
 
-        function borrarHistorial() { if(confirm("¿Estás seguro de que quieres borrar todos los registros de tu teléfono?")) { ventas = []; localStorage.removeItem('ventasConaplastV10'); mostrarVentas(ventas); } }
+        function borrarHistorial() { if(confirm("¿Estás seguro de que quieres borrar todos los registros de tu teléfono?")) { ventas = []; localStorage.removeItem('ventasConaplastV11'); mostrarVentas(ventas); } }
     </script>
 </body>
 </html>
-
