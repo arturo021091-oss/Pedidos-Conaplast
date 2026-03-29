@@ -92,7 +92,7 @@
             <div class="section-title">2. Material y Medidas</div>
             
             <div class="switch-container termo-highlight">
-                <label for="esTermo" style="color:#0369a1; font-weight:bold;">¿Es Termoencogible?</label>
+                <label for="esTermo" style="color:#0369a1; font-weight:bold;">¿Formato Bobina / Rollo?</label>
                 <input type="checkbox" id="esTermo" onchange="toggleTermo()">
             </div>
             
@@ -273,8 +273,8 @@
     </div>
 
     <script>
-        let ventas = JSON.parse(localStorage.getItem('ventasConaplastV19')) || [];
-        let ordenesProd = JSON.parse(localStorage.getItem('prodConaplastV10')) || []; 
+        let ventas = JSON.parse(localStorage.getItem('ventasConaplastV20')) || [];
+        let ordenesProd = JSON.parse(localStorage.getItem('prodConaplastV11')) || []; 
         
         const listaMaterialesPlanta = [
             "FB3003", "FD0348", "Lineal 11PG1", "Lineal 11PG4", "7000F", 
@@ -419,9 +419,10 @@
             const nombreMat = document.getElementById('material').value.split('|')[1];
             const esImp = document.getElementById('impresa').checked;
             
-            let strMedidas = isTermo ? `Termoencogible | ${formato} | ${ancho}cm x ${esp}` : (llevaFuelle ? `${formato} | ${fI}+${ancho}+${fD}*${largo}*${esp}` : `${formato} | ${ancho}*${largo}*${esp}`);
+            // Actualizado para reflejar Bobina / Rollo en el texto de las medidas
+            let strMedidas = isTermo ? `Bobina / Rollo | ${formato} | ${ancho}cm x ${esp}` : (llevaFuelle ? `${formato} | ${fI}+${ancho}+${fD}*${largo}*${esp}` : `${formato} | ${ancho}*${largo}*${esp}`);
             const totalUSDRaw = kgFinal * precioKg;
-            const bolsasFinal = isTermo ? "Termoencogible" : parseInt(document.getElementById('cantidadBolsasInput').value).toLocaleString('es-VE');
+            const bolsasFinal = isTermo ? "Bobina Continua" : parseInt(document.getElementById('cantidadBolsasInput').value).toLocaleString('es-VE');
 
             const nuevaVenta = {
                 id: Date.now().toString(), fecha: new Date().toLocaleDateString('es-VE'), cliente, rif: document.getElementById('rif').value || 'N/A', 
@@ -431,7 +432,7 @@
                 rawPrecioKg: precioKg, rawTasa: tasa
             };
 
-            ventas.unshift(nuevaVenta); localStorage.setItem('ventasConaplastV19', JSON.stringify(ventas));
+            ventas.unshift(nuevaVenta); localStorage.setItem('ventasConaplastV20', JSON.stringify(ventas));
             document.getElementById('buscador').value = ''; mostrarVentas(ventas); actualizarSelectPedidosProd();
             document.getElementById('modalCuerpoTexto').innerHTML = `<strong>Kilos:</strong><br><span style="font-size:26px;color:#0F204C">${nuevaVenta.pesoKg} Kg</span>`;
             document.getElementById('modalResultado').style.display = 'flex';
@@ -458,7 +459,7 @@
         function enviarWA(i) {
             const v = ventas[i];
             const detImp = v.esImpresa ? `\n\n🎨 *Impresión:*\n• Caras: ${v.caras} / Colores: ${v.colores}` : `\n\n🎨 *Sin impresión*`;
-            const rend = v.isTermo ? `` : `\n• Bolsas aprox: ${v.cantidadBolsas}`;
+            const rend = v.isTermo ? `\n• Formato: Bobina / Rollo` : `\n• Bolsas aprox: ${v.cantidadBolsas}`;
             const precM = v.isTermo ? `` : `\n• Precio Millar: $${v.precioM}`;
             const msg = `Cotización *Conaplast C.A.*\n\n👤 *Cliente:* ${v.cliente}\n• RIF: ${v.rif}\n\n📦 *Especificaciones:*\n• Material: ${v.material}\n• Medidas: ${v.medidas}\n• Pedido: ${v.pesoKg} Kg${rend}${detImp}\n\n💰 *Total:*${precM}\n• $${v.totalUSD} / Bs. ${v.totalBs}`;
             window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
@@ -480,7 +481,7 @@
 
             if (p) {
                 document.getElementById('prodKgTotal').value = p.pesoKg + ' Kg';
-                document.getElementById('prodBolsasTotal').value = p.isTermo ? "Termoencogible" : p.cantidadBolsas + ' uds';
+                document.getElementById('prodBolsasTotal').value = p.isTermo ? "Bobina Continua" : p.cantidadBolsas + ' uds';
                 pedidoActualKg = p.rawPesoKg;
                 document.getElementById('impMaquina').value = p.esImpresa ? "Impresora 1" : "N/A";
                 if (p.isTermo) { document.getElementById('sellMaquina').value = "N/A"; document.getElementById('sellTipo').value = "N/A"; }
@@ -525,7 +526,7 @@
             const recName = document.getElementById('recNombre').value; const recKg = parseFloat(document.getElementById('recKg').value);
             
             const nO = {
-                idPedido: id, cliente: p.cliente, medidas: p.medidas, pesoKg: p.pesoKg, bolsas: p.isTermo ? "Termoencogible" : p.cantidadBolsas, fecha: new Date().toLocaleDateString('es-VE'),
+                idPedido: id, cliente: p.cliente, medidas: p.medidas, pesoKg: p.pesoKg, bolsas: p.isTermo ? "Bobina Continua" : p.cantidadBolsas, fecha: new Date().toLocaleDateString('es-VE'),
                 caras: p.caras, colores: p.colores,
                 extrusora: document.getElementById('extMaquina').value,
                 mat1: m1Name ? `${m1Name}: ${document.getElementById('mat1Pct').value}% (${m1Kg.toFixed(1)} Kg)` : null,
@@ -537,7 +538,7 @@
                 selladora: document.getElementById('sellMaquina').value, selladoTipo: document.getElementById('sellTipo').value, obsSel: document.getElementById('obsSellado').value.trim()
             };
 
-            ordenesProd.unshift(nO); localStorage.setItem('prodConaplastV10', JSON.stringify(ordenesProd)); mostrarOrdenes();
+            ordenesProd.unshift(nO); localStorage.setItem('prodConaplastV11', JSON.stringify(ordenesProd)); mostrarOrdenes();
             document.getElementById('modalCuerpoTexto').innerHTML = `<strong>Orden Generada</strong><br><span style="font-size:16px;color:#0F204C">Guardada con éxito</span>`;
             document.getElementById('modalResultado').style.display = 'flex';
         }
@@ -550,7 +551,7 @@
                 tr.innerHTML = `<td><span class="fecha-tag">${o.fecha}</span><strong>${o.cliente}</strong> (${o.pesoKg} Kg)<br>
                     <span class="tag-maquina">EXT: ${o.extrusora.replace('Extrusora ','E')}</span>
                     ${o.impresora !== 'N/A' ? `<span class="tag-maquina">IMP: ${o.impresora.replace('Impresora ','I')}</span>` : ''}
-                    ${o.selladora !== 'N/A' ? `<span class="tag-maquina">SEL: ${o.selladora.replace('Selladora ','S')} (${o.selladoTipo.charAt(0)})</span>` : '<span class="tag-maquina" style="background:#bae6fd;">TERMO</span>'}
+                    ${o.selladora !== 'N/A' ? `<span class="tag-maquina">SEL: ${o.selladora.replace('Selladora ','S')} (${o.selladoTipo.charAt(0)})</span>` : '<span class="tag-maquina" style="background:#bae6fd;">BOBINA</span>'}
                     </td>
                     <td><ul style="margin:0; padding-left:15px; font-size:12px; color:gray;">${mz}</ul></td>
                     <td>
@@ -572,15 +573,15 @@
 
             const tE = `⚙️ *1. EXTRUSIÓN:* ${o.extrusora}\n*Mezcla:*\n${mezclaTexto}${obsExt}`;
             const tI = `🖨️ *2. IMPRESIÓN:* ${o.impresora}${detImp}${obsImp}`;
-            const tS = o.selladora === 'N/A' ? `✂️ *3. SELLADO:* No aplica (Termoencogible)` : `✂️ *3. SELLADO:* ${o.selladora} (${o.selladoTipo})${obsSel}`;
+            const tS = o.selladora === 'N/A' ? `✂️ *3. SELLADO:* No aplica (Bobina / Rollo)` : `✂️ *3. SELLADO:* ${o.selladora} (${o.selladoTipo})${obsSel}`;
 
             const msg = `🏭 *ORDEN DE PRODUCCIÓN - Conaplast C.A.*\n\n👤 *Cliente:* ${o.cliente}\n📦 *Pedido:* ${o.pesoKg} Kg | ${o.bolsas}\n📏 *Medidas:* ${o.medidas}\n\n${tE}\n\n${tI}\n\n${tS}`;
             window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
         }
 
-        function eliminarOrden(i) { if(confirm("¿Borrar esta orden?")) { ordenesProd.splice(i, 1); localStorage.setItem('prodConaplastV10', JSON.stringify(ordenesProd)); mostrarOrdenes(); } }
-        function borrarHistorial() { if(confirm("¿Borrar todo el historial de Cotizaciones?")) { ventas = []; localStorage.removeItem('ventasConaplastV19'); mostrarVentas(ventas); } }
-        function borrarProduccion() { if(confirm("¿Borrar todas las órdenes?")) { ordenesProd = []; localStorage.removeItem('prodConaplastV10'); mostrarOrdenes(); } }
+        function eliminarOrden(i) { if(confirm("¿Borrar esta orden?")) { ordenesProd.splice(i, 1); localStorage.setItem('prodConaplastV11', JSON.stringify(ordenesProd)); mostrarOrdenes(); } }
+        function borrarHistorial() { if(confirm("¿Borrar todo el historial de Cotizaciones?")) { ventas = []; localStorage.removeItem('ventasConaplastV20'); mostrarVentas(ventas); } }
+        function borrarProduccion() { if(confirm("¿Borrar todas las órdenes?")) { ordenesProd = []; localStorage.removeItem('prodConaplastV11'); mostrarOrdenes(); } }
     </script>
 </body>
 </html>
