@@ -281,10 +281,10 @@
     </div>
 
     <script>
-        // MEMORIA BASE ACTUALIZADA A V23 PARA EVITAR CONFLICTOS
-        let ventas = JSON.parse(localStorage.getItem('ventasConaplastV23')) || [];
-        let ordenesProd = JSON.parse(localStorage.getItem('prodConaplastV14')) || []; 
-        let cuentasAdmin = JSON.parse(localStorage.getItem('adminConaplastV3')) || [];
+        // MEMORIA BASE ACTUALIZADA A V24 PARA EVITAR CONFLICTOS
+        let ventas = JSON.parse(localStorage.getItem('ventasConaplastV24')) || [];
+        let ordenesProd = JSON.parse(localStorage.getItem('prodConaplastV15')) || []; 
+        let cuentasAdmin = JSON.parse(localStorage.getItem('adminConaplastV4')) || [];
         
         const listaMaterialesPlanta = ["FB3003", "FD0348", "Lineal 11PG1", "Lineal 11PG4", "7000F", "Recuperado Neutro", "Recuperado Negro", "Recuperado Agua Panela"];
         let inventario = JSON.parse(localStorage.getItem('inventarioConaplastV1'));
@@ -352,7 +352,7 @@
                 pesoKg: kgFinal.toFixed(2), rawPesoKg: kgFinal, cantidadBolsas: bolsasFinal, rawBolsasNum: isTermo ? 0 : bolsasInput, isTermo: isTermo, 
                 totalUSD: formatearMoneda(totalUSDRaw), totalBs: formatearMoneda(totalUSDRaw * tasa), precioM: isTermo ? "N/A" : formatearMoneda(getPesoUnaBolsaKg() * 1000 * precioKg), rawPrecioKg: precioKg, rawTasa: tasa 
             };
-            ventas.unshift(nuevaVenta); localStorage.setItem('ventasConaplastV23', JSON.stringify(ventas)); document.getElementById('buscador').value = ''; mostrarVentas(ventas); actualizarSelectPedidosProd(); actualizarSelectPedidosAdmin(); document.getElementById('modalCuerpoTexto').innerHTML = `<strong>Kilos:</strong><br><span style="font-size:26px;color:#0F204C">${nuevaVenta.pesoKg} Kg</span>`; document.getElementById('modalResultado').style.display = 'flex';
+            ventas.unshift(nuevaVenta); localStorage.setItem('ventasConaplastV24', JSON.stringify(ventas)); document.getElementById('buscador').value = ''; mostrarVentas(ventas); actualizarSelectPedidosProd(); actualizarSelectPedidosAdmin(); document.getElementById('modalCuerpoTexto').innerHTML = `<strong>Kilos:</strong><br><span style="font-size:26px;color:#0F204C">${nuevaVenta.pesoKg} Kg</span>`; document.getElementById('modalResultado').style.display = 'flex';
         }
 
         function filtrarVentas() { const txt = document.getElementById('buscador').value.toLowerCase(); mostrarVentas(ventas.filter(v => v.cliente.toLowerCase().includes(txt) || v.fecha.includes(txt))); }
@@ -395,12 +395,12 @@
                 impresora: document.getElementById('impMaquina').value, obsImp: document.getElementById('obsImpresion').value.trim(), 
                 selladora: document.getElementById('sellMaquina').value, selladoTipo: document.getElementById('sellTipo').value, obsSel: document.getElementById('obsSellado').value.trim() 
             }; 
-            ordenesProd.unshift(nO); localStorage.setItem('prodConaplastV14', JSON.stringify(ordenesProd)); mostrarOrdenes(); 
+            ordenesProd.unshift(nO); localStorage.setItem('prodConaplastV15', JSON.stringify(ordenesProd)); mostrarOrdenes(); 
             document.getElementById('modalCuerpoTexto').innerHTML = `<strong>Orden Generada</strong><br><span style="font-size:16px;color:#0F204C">Enviada a Cola de Producción</span>`; document.getElementById('modalResultado').style.display = 'flex'; 
         }
 
         // ==========================================
-        // LA MAGIA DEL CIERRE: RECALCULAR PRECIOS
+        // RECALCULAR PRECIOS Y ENVIAR AL ADMIN
         // ==========================================
         function cambiarStatus(index, nuevoStatus) {
             const o = ordenesProd[index];
@@ -414,39 +414,34 @@
                     o.status = nuevoStatus;
                     o.produccionReal = cant;
 
-                    // BUSCAMOS LA VENTA ORIGINAL PARA RECALCULAR
                     const p = ventas.find(v => v.id === o.idPedido);
                     if (p) {
                         let nuevoTotalRaw = 0;
                         if (p.isTermo) {
                             nuevoTotalRaw = cant * p.rawPrecioKg;
-                            p.pesoKg = cant.toFixed(2); // Ajusta Kilos visuales
+                            p.pesoKg = cant.toFixed(2);
                         } else {
-                            // Precio Unitario exacto de cada bolsa = (Total original / Bolsas cotizadas)
                             const precioUnitario = (p.rawPesoKg * p.rawPrecioKg) / p.rawBolsasNum;
                             nuevoTotalRaw = cant * precioUnitario;
-                            p.cantidadBolsas = cant.toLocaleString('es-VE'); // Ajusta Bolsas visuales
+                            p.cantidadBolsas = cant.toLocaleString('es-VE');
                             
-                            // Ajuste proporcional de kilos para mostrar en tabla
                             const pesoDeUnaBolsa = p.rawPesoKg / p.rawBolsasNum;
                             p.pesoKg = (cant * pesoDeUnaBolsa).toFixed(2);
                         }
                         
-                        // Guardamos nuevos precios en la Venta
                         p.totalUSD = formatearMoneda(nuevoTotalRaw);
                         p.totalBs = formatearMoneda(nuevoTotalRaw * p.rawTasa);
-                        localStorage.setItem('ventasConaplastV23', JSON.stringify(ventas));
+                        localStorage.setItem('ventasConaplastV24', JSON.stringify(ventas));
 
-                        // BUSCAMOS SI YA ESTÁ EN ADMINISTRACIÓN
                         const adminIndex = cuentasAdmin.findIndex(c => c.idPedido === o.idPedido);
                         if (adminIndex !== -1) {
                             const adminAcct = cuentasAdmin[adminIndex];
                             adminAcct.total = nuevoTotalRaw;
-                            // El abono se respeta, solo modificamos el saldo deudor
                             adminAcct.saldo = nuevoTotalRaw - adminAcct.abono;
-                            adminAcct.ajustado = true; // Etiqueta visual
+                            adminAcct.ajustado = true;
+                            adminAcct.cantidadFinal = cant; // Guardamos lo que se produjo
                             
-                            localStorage.setItem('adminConaplastV3', JSON.stringify(cuentasAdmin));
+                            localStorage.setItem('adminConaplastV4', JSON.stringify(cuentasAdmin));
                             mostrarAdmin();
                         }
                         
@@ -454,7 +449,7 @@
                         mostrarVentas(ventas);
                     }
                 } else {
-                    mostrarOrdenes(); // Si cancela, retrocede visualmente el select
+                    mostrarOrdenes(); 
                     return;
                 }
             } else {
@@ -462,7 +457,7 @@
                 o.produccionReal = null; 
             }
             
-            localStorage.setItem('prodConaplastV14', JSON.stringify(ordenesProd));
+            localStorage.setItem('prodConaplastV15', JSON.stringify(ordenesProd));
             mostrarOrdenes();
         }
 
@@ -489,9 +484,9 @@
         }
         
         function enviarWAProd(index) { const o = ordenesProd[index]; let mezclaTexto = `• ${o.mat1}`; if(o.mat2) mezclaTexto += `\n• ${o.mat2}`; if(o.rec) mezclaTexto += `\n• ${o.rec}`; if(o.aditivo) mezclaTexto += `\n• ${o.aditivo}`; let obsExt = o.obsExt ? `\n⚠️ *Obs:* _${o.obsExt}_` : ``; let obsImp = o.obsImp ? `\n⚠️ *Obs:* _${o.obsImp}_` : ``; let obsSel = o.obsSel ? `\n⚠️ *Obs:* _${o.obsSel}_` : ``; let detImp = (o.impresora !== 'N/A' && o.caras && o.colores) ? `\n• Caras: ${o.caras} | Colores: ${o.colores}` : ""; const tE = `⚙️ *1. EXTRUSIÓN:* ${o.extrusora}\n*Mezcla:*\n${mezclaTexto}${obsExt}`; const tI = `🖨️ *2. IMPRESIÓN:* ${o.impresora}${detImp}${obsImp}`; const tS = o.selladora === 'N/A' ? `✂️ *3. SELLADO:* No aplica (Bobina / Rollo)` : `✂️ *3. SELLADO:* ${o.selladora} (${o.selladoTipo})${obsSel}`; const msg = `🏭 *ORDEN DE PRODUCCIÓN - Conaplast C.A.*\n\n👤 *Cliente:* ${o.cliente}\n📦 *Pedido:* ${o.pesoKg} Kg | ${o.bolsas}\n📏 *Medidas:* ${o.medidas}\n\n${tE}\n\n${tI}\n\n${tS}`; window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank'); }
-        function eliminarOrden(i) { if(confirm("¿Borrar esta orden?")) { ordenesProd.splice(i, 1); localStorage.setItem('prodConaplastV14', JSON.stringify(ordenesProd)); mostrarOrdenes(); } }
-        function borrarHistorial() { if(confirm("¿Borrar todo el historial de Cotizaciones?")) { ventas = []; localStorage.removeItem('ventasConaplastV23'); mostrarVentas(ventas); } }
-        function borrarProduccion() { if(confirm("¿Borrar todas las órdenes?")) { ordenesProd = []; localStorage.removeItem('prodConaplastV14'); mostrarOrdenes(); } }
+        function eliminarOrden(i) { if(confirm("¿Borrar esta orden?")) { ordenesProd.splice(i, 1); localStorage.setItem('prodConaplastV15', JSON.stringify(ordenesProd)); mostrarOrdenes(); } }
+        function borrarHistorial() { if(confirm("¿Borrar todo el historial de Cotizaciones?")) { ventas = []; localStorage.removeItem('ventasConaplastV24'); mostrarVentas(ventas); } }
+        function borrarProduccion() { if(confirm("¿Borrar todas las órdenes?")) { ordenesProd = []; localStorage.removeItem('prodConaplastV15'); mostrarOrdenes(); } }
 
         // ==========================================
         // ADMINISTRACIÓN Y GALPÓN
@@ -502,10 +497,39 @@
         function actualizarSelectPedidosAdmin() { const sel = document.getElementById('selectPedidoAdmin'); sel.innerHTML = '<option value="">-- Selecciona un pedido --</option>'; ventas.forEach(v => { const opt = document.createElement('option'); opt.value = v.id; opt.text = `${v.cliente} - $${v.totalUSD}`; sel.appendChild(opt); }); }
         function cargarDatosAdmin() { const id = document.getElementById('selectPedidoAdmin').value; const p = ventas.find(v => v.id === id); document.getElementById('rangoPrepago').value = 0; if (p) { adminTotalRaw = parseFloat(p.totalUSD.replace(/\./g, '').replace(',', '.')); document.getElementById('adminTotal').value = '$ ' + p.totalUSD; calcularCondiciones(); } else { adminTotalRaw = 0; document.getElementById('adminTotal').value = ''; document.getElementById('adminAbono').value = ''; document.getElementById('adminSaldo').value = ''; document.getElementById('lblPorcentaje').innerText = '0%'; } }
         function calcularCondiciones() { if(adminTotalRaw === 0) return; const porcentaje = parseInt(document.getElementById('rangoPrepago').value); document.getElementById('lblPorcentaje').innerText = porcentaje + '%'; const abono = adminTotalRaw * (porcentaje / 100); const saldo = adminTotalRaw - abono; document.getElementById('adminAbono').value = '$ ' + formatearMoneda(abono); document.getElementById('adminSaldo').value = '$ ' + formatearMoneda(saldo); }
-        function guardarCondicionesAdmin() { const id = document.getElementById('selectPedidoAdmin').value; if (!id) { alert("⚠️ Selecciona un pedido para registrar."); return; } const p = ventas.find(v => v.id === id); const porcentaje = parseInt(document.getElementById('rangoPrepago').value); const abono = adminTotalRaw * (porcentaje / 100); const saldo = adminTotalRaw - abono; const diasCredito = parseInt(document.getElementById('diasCredito').value); let fechaVence = new Date(); fechaVence.setDate(fechaVence.getDate() + diasCredito); const nC = { idPedido: id, cliente: p.cliente, fechaRegistro: new Date().toLocaleDateString('es-VE'), fechaVence: fechaVence.toLocaleDateString('es-VE'), diasCredito: diasCredito, total: adminTotalRaw, abono: abono, saldo: saldo, porcentaje: porcentaje, ajustado: false }; cuentasAdmin.unshift(nC); localStorage.setItem('adminConaplastV3', JSON.stringify(cuentasAdmin)); mostrarAdmin(); document.getElementById('modalCuerpoTexto').innerHTML = `<strong>Cuenta Registrada</strong><br><span style="font-size:16px;color:#0F204C">Crédito a ${diasCredito} días asignado</span>`; document.getElementById('modalResultado').style.display = 'flex'; }
-        function mostrarAdmin() { const tbody = document.getElementById('listaAdmin'); tbody.innerHTML = ''; cuentasAdmin.forEach((c, i) => { const tr = document.createElement('tr'); const badge = c.saldo <= 0 ? `<span class="badge-pago">PAGADO</span>` : `<span class="badge-deuda">SALDO</span>`; const badgeAjuste = c.ajustado ? `<br><span class="badge-ajuste">Ajustado por Producción</span>` : ''; const diasInfo = c.diasCredito === 0 ? "Contado" : `Crédito: ${c.diasCredito}d<br><small>Vence: ${c.fechaVence}</small>`; tr.innerHTML = `<td><span class="fecha-tag">${c.fechaRegistro}</span><strong>${c.cliente}</strong><br>${badge}${badgeAjuste}</td><td><small style="color:gray">${diasInfo}</small></td><td><strong>$${formatearMoneda(c.saldo)}</strong><br><small style="color:#34c759">Abono: $${formatearMoneda(c.abono)}</small></td><td><button class="btn-wa" style="width:100%;" onclick="enviarCobroWA(${i})">Cobrar</button></td>`; tbody.appendChild(tr); }); }
-        function enviarCobroWA(index) { const c = cuentasAdmin[index]; if(c.saldo <= 0) { alert("Esta cuenta ya está totalmente pagada."); return; } const txtCredito = c.diasCredito === 0 ? `pago de contado` : `crédito a ${c.diasCredito} días (Vencimiento: ${c.fechaVence})`; const txtAjuste = c.ajustado ? `\n_*(Nota: El total fue ajustado según la producción final exacta entregada)*_` : ''; const msg = `Hola, te saludo desde Administración de *Conaplast C.A.*\n\nTe escribimos para informarte el estatus de tu cuenta:\n\n👤 *Cliente:* ${c.cliente}\n💰 *Total del Pedido:* $${formatearMoneda(c.total)}${txtAjuste}\n✅ *Anticipo:* $${formatearMoneda(c.abono)} (${c.porcentaje}%)\n\n⚠️ *SALDO PENDIENTE: $${formatearMoneda(c.saldo)}*\n\n📌 *Condición:* ${txtCredito}.\n\nPor favor, envíanos el soporte de pago por esta vía. ¡Gracias por confiar en nosotros!`; window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank'); }
-        function borrarAdmin() { if(confirm("¿Borrar todo el historial de cuentas por cobrar?")) { cuentasAdmin = []; localStorage.removeItem('adminConaplastV3'); mostrarAdmin(); } }
+        function guardarCondicionesAdmin() { 
+            const id = document.getElementById('selectPedidoAdmin').value; if (!id) { alert("⚠️ Selecciona un pedido para registrar."); return; } 
+            const p = ventas.find(v => v.id === id); const porcentaje = parseInt(document.getElementById('rangoPrepago').value); const abono = adminTotalRaw * (porcentaje / 100); const saldo = adminTotalRaw - abono; const diasCredito = parseInt(document.getElementById('diasCredito').value); let fechaVence = new Date(); fechaVence.setDate(fechaVence.getDate() + diasCredito); 
+            
+            const nC = { 
+                idPedido: id, cliente: p.cliente, fechaRegistro: new Date().toLocaleDateString('es-VE'), fechaVence: fechaVence.toLocaleDateString('es-VE'), diasCredito: diasCredito, total: adminTotalRaw, abono: abono, saldo: saldo, porcentaje: porcentaje, ajustado: false,
+                isTermo: p.isTermo, cantidadOriginal: p.isTermo ? p.rawPesoKg : p.rawBolsasNum, cantidadFinal: null // Guardamos data base para comparar despues
+            }; 
+            cuentasAdmin.unshift(nC); localStorage.setItem('adminConaplastV4', JSON.stringify(cuentasAdmin)); mostrarAdmin(); document.getElementById('modalCuerpoTexto').innerHTML = `<strong>Cuenta Registrada</strong><br><span style="font-size:16px;color:#0F204C">Crédito a ${diasCredito} días asignado</span>`; document.getElementById('modalResultado').style.display = 'flex'; 
+        }
+
+        function mostrarAdmin() { const tbody = document.getElementById('listaAdmin'); tbody.innerHTML = ''; cuentasAdmin.forEach((c, i) => { const tr = document.createElement('tr'); const badge = c.saldo <= 0 ? `<span class="badge-pago">PAGADO</span>` : `<span class="badge-deuda">SALDO</span>`; const badgeAjuste = c.ajustado ? `<br><span class="badge-ajuste">Ajustado por Prod.</span>` : ''; const diasInfo = c.diasCredito === 0 ? "Contado" : `Crédito: ${c.diasCredito}d<br><small>Vence: ${c.fechaVence}</small>`; tr.innerHTML = `<td><span class="fecha-tag">${c.fechaRegistro}</span><strong>${c.cliente}</strong><br>${badge}${badgeAjuste}</td><td><small style="color:gray">${diasInfo}</small></td><td><strong>$${formatearMoneda(c.saldo)}</strong><br><small style="color:#34c759">Abono: $${formatearMoneda(c.abono)}</small></td><td><button class="btn-wa" style="width:100%;" onclick="enviarCobroWA(${i})">Cobrar</button></td>`; tbody.appendChild(tr); }); }
+        
+        function enviarCobroWA(index) { 
+            const c = cuentasAdmin[index]; 
+            if(c.saldo <= 0) { alert("Esta cuenta ya está totalmente pagada."); return; } 
+            
+            let txtAjuste = "";
+            if (c.ajustado) {
+                const unidad = c.isTermo ? "Kg" : "bolsas";
+                const numOrig = c.isTermo ? c.cantidadOriginal.toFixed(2) : c.cantidadOriginal.toLocaleString('es-VE');
+                const numFin = c.isTermo ? c.cantidadFinal.toFixed(2) : c.cantidadFinal.toLocaleString('es-VE');
+                const dif = c.cantidadFinal - c.cantidadOriginal;
+                const difText = dif > 0 ? `un incremento de ${c.isTermo ? dif.toFixed(2) : dif.toLocaleString('es-VE')}` : `una disminución de ${c.isTermo ? Math.abs(dif).toFixed(2) : Math.abs(dif).toLocaleString('es-VE')}`;
+
+                txtAjuste = `\n\n📈 *Ajuste de Producción:*\n• Pedido original: ${numOrig} ${unidad}\n• Producción real: ${numFin} ${unidad}\n_*(Hubo ${difText} ${unidad}, por lo que el total se ajustó a $${formatearMoneda(c.total)})*_`;
+            }
+
+            const txtCredito = c.diasCredito === 0 ? `pago de contado` : `crédito a ${c.diasCredito} días (Vencimiento: ${c.fechaVence})`; 
+            const msg = `Hola, te saludo desde Administración de *Conaplast C.A.*\n\nTe escribimos para informarte el estatus de tu cuenta:\n\n👤 *Cliente:* ${c.cliente}\n💰 *Total del Pedido:* $${formatearMoneda(c.total)}${txtAjuste}\n✅ *Anticipo:* $${formatearMoneda(c.abono)} (${c.porcentaje}%)\n\n⚠️ *SALDO PENDIENTE: $${formatearMoneda(c.saldo)}*\n\n📌 *Condición:* ${txtCredito}.\n\nPor favor, envíanos el soporte de pago por esta vía. ¡Gracias por confiar en nosotros!`; 
+            window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank'); 
+        }
+        function borrarAdmin() { if(confirm("¿Borrar todo el historial de cuentas por cobrar?")) { cuentasAdmin = []; localStorage.removeItem('adminConaplastV4'); mostrarAdmin(); } }
     </script>
 </body>
 </html>
