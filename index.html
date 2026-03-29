@@ -3,31 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#0F204C">
     <link rel="apple-touch-icon" href="logo.png">
     
     <title>Conaplast C.A.</title>
     <style>
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            padding: 15px;
-            background: linear-gradient(135deg, #0f204c 0%, #1e3a8a 50%, #0f204c 100%);
-            background-attachment: fixed;
-            margin: 0;
-            position: relative;
-            overflow-x: hidden;
-        }
-
-        body::before, body::after {
-            content: '';
-            position: fixed;
-            width: 300px; height: 300px;
-            background-color: rgba(30, 58, 138, 0.3);
-            transform: rotate(45deg);
-            z-index: -1;
-        }
-
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; padding: 15px; background: linear-gradient(135deg, #0f204c 0%, #1e3a8a 50%, #0f204c 100%); background-attachment: fixed; margin: 0; position: relative; overflow-x: hidden; }
+        body::before, body::after { content: ''; position: fixed; width: 300px; height: 300px; background-color: rgba(30, 58, 138, 0.3); transform: rotate(45deg); z-index: -1; }
         body::before { top: -100px; left: -100px; }
         body::after { bottom: -100px; right: -100px; width: 400px; height: 400px; }
         
@@ -77,7 +59,6 @@
         .modal-title { margin-top: 0; color: #0F204C; font-size: 22px; margin-bottom: 15px; }
         .modal-text { font-size: 18px; color: #1c1c1e; margin: 10px 0; line-height: 1.4; }
         .modal-btn { background-color: #0F204C; margin-top: 20px; }
-        
         .tag-maquina { background: #e5e5ea; padding: 3px 6px; border-radius: 4px; font-size: 11px; font-weight: bold; color: #1c1c1e; margin-right: 5px;}
     </style>
 </head>
@@ -103,14 +84,8 @@
     <div id="cotizacion-view" class="view-section active">
         <div class="card">
             <div class="section-title">1. Datos del Cliente</div>
-            <div class="form-group">
-                <label for="cliente">Nombre del Cliente:</label>
-                <input type="text" id="cliente" placeholder="Ej: Inversiones XYZ">
-            </div>
-            <div class="form-group">
-                <label for="rif">RIF:</label>
-                <input type="text" id="rif" placeholder="Ej: J-12345678-9">
-            </div>
+            <div class="form-group"><label for="cliente">Nombre del Cliente:</label><input type="text" id="cliente" placeholder="Ej: Inversiones XYZ"></div>
+            <div class="form-group"><label for="rif">RIF:</label><input type="text" id="rif" placeholder="Ej: J-12345678-9"></div>
             
             <div class="section-title">2. Material y Medidas</div>
             <div class="form-group">
@@ -123,110 +98,51 @@
             </div>
 
             <div class="form-row">
-                <div class="form-group">
-                    <label for="ancho">Ancho (cm):</label>
-                    <input type="number" id="ancho" step="0.1" placeholder="Ej: 40" oninput="calcularBase()">
-                </div>
-                <div class="form-group">
-                    <label for="largo">Largo (cm):</label>
-                    <input type="number" id="largo" step="0.1" placeholder="Ej: 50" oninput="calcularBase()">
-                </div>
-                <div class="form-group">
-                    <label for="espesor">Espesor:</label>
-                    <input type="number" id="espesor" step="0.001" placeholder="Ej: 0.005" oninput="calcularBase()">
-                </div>
+                <div class="form-group"><label for="ancho">Ancho (cm):</label><input type="number" id="ancho" step="0.1" oninput="calcularBase()"></div>
+                <div class="form-group"><label for="largo">Largo (cm):</label><input type="number" id="largo" step="0.1" oninput="calcularBase()"></div>
+                <div class="form-group"><label for="espesor">Espesor:</label><input type="number" id="espesor" step="0.001" oninput="calcularBase()"></div>
             </div>
 
-            <div class="switch-container">
-                <label for="llevaFuelle">Fuelle</label>
-                <input type="checkbox" id="llevaFuelle" onchange="toggleFuelle()">
-            </div>
-
+            <div class="switch-container"><label for="llevaFuelle">Fuelle</label><input type="checkbox" id="llevaFuelle" onchange="toggleFuelle()"></div>
             <div id="opcionesFuelle" style="display: none;">
                 <div class="form-row">
-                    <div class="form-group">
-                        <label for="fuelleIzq">Fuelle Izquierdo (cm):</label>
-                        <input type="number" id="fuelleIzq" step="0.1" oninput="calcularBase()">
-                    </div>
-                    <div class="form-group">
-                        <label for="fuelleDer">Fuelle Derecho (cm):</label>
-                        <input type="number" id="fuelleDer" step="0.1" oninput="calcularBase()">
-                    </div>
+                    <div class="form-group"><label for="fuelleIzq">Fuelle Izquierdo (cm):</label><input type="number" id="fuelleIzq" step="0.1" oninput="calcularBase()"></div>
+                    <div class="form-group"><label for="fuelleDer">Fuelle Derecho (cm):</label><input type="number" id="fuelleDer" step="0.1" oninput="calcularBase()"></div>
                 </div>
             </div>
 
-            <div class="switch-container">
-                <label for="impresa">Impresión</label>
-                <input type="checkbox" id="impresa" onchange="toggleImpresion()">
-            </div>
-            
+            <div class="switch-container"><label for="impresa">Impresión</label><input type="checkbox" id="impresa" onchange="toggleImpresion()"></div>
             <div id="opcionesImpresion" style="display: none;">
                 <div class="form-row">
-                    <div class="form-group">
-                        <label for="caras">Caras Impresas:</label>
-                        <select id="caras">
-                            <option value="1">1</option><option value="2">2</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="colores">N° de Colores:</label>
-                        <select id="colores">
-                            <option value="1">1</option><option value="2">2</option><option value="3">3</option>
-                            <option value="4">4</option><option value="5">5</option><option value="6">6</option>
-                        </select>
-                    </div>
+                    <div class="form-group"><label for="caras">Caras Impresas:</label><select id="caras"><option value="1">1</option><option value="2">2</option></select></div>
+                    <div class="form-group"><label for="colores">N° de Colores:</label><select id="colores"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option></select></div>
                 </div>
             </div>
 
             <div class="section-title">3. Datos del Pedido</div>
             <div class="form-row">
-                <div class="form-group">
-                    <label for="pesoEspecifico">Peso Específico:</label>
-                    <input type="text" id="pesoEspecifico" class="input-calculado" readonly placeholder="0.00 g">
-                </div>
-                <div class="form-group">
-                    <label for="pesoMillarKg">Peso Millar:</label>
-                    <input type="text" id="pesoMillarKg" class="input-calculado" readonly placeholder="0.00 Kg">
-                </div>
+                <div class="form-group"><label for="pesoEspecifico">Peso Específico:</label><input type="text" id="pesoEspecifico" class="input-calculado" readonly placeholder="0.00 g"></div>
+                <div class="form-group"><label for="pesoMillarKg">Peso Millar:</label><input type="text" id="pesoMillarKg" class="input-calculado" readonly placeholder="0.00 Kg"></div>
             </div>
 
             <div class="form-row">
-                <div class="form-group">
-                    <label for="cantidadBolsasInput">Unidades:</label>
-                    <input type="number" id="cantidadBolsasInput" placeholder="Ej: 50000" oninput="calcularDesdeBolsas()">
-                </div>
-                <div class="form-group">
-                    <label for="cantidadKgInput">Kilos:</label>
-                    <input type="number" id="cantidadKgInput" placeholder="Ej: 300" oninput="calcularDesdeKg()">
-                </div>
+                <div class="form-group"><label for="cantidadBolsasInput">Unidades:</label><input type="number" id="cantidadBolsasInput" oninput="calcularDesdeBolsas()"></div>
+                <div class="form-group"><label for="cantidadKgInput">Kilos:</label><input type="number" id="cantidadKgInput" oninput="calcularDesdeKg()"></div>
             </div>
 
             <div class="section-title">4. Finanzas</div>
             <div class="form-row">
-                <div class="form-group">
-                    <label for="precioKg">Precio por Kg ($):</label>
-                    <input type="number" id="precioKg" step="0.01" oninput="calcularBase()">
-                </div>
-                <div class="form-group">
-                    <label for="precioMillarUSD">Precio Millar ($):</label>
-                    <input type="text" id="precioMillarUSD" class="input-calculado" readonly placeholder="0.00 $">
-                </div>
+                <div class="form-group"><label for="precioKg">Precio por Kg ($):</label><input type="number" id="precioKg" step="0.01" oninput="calcularBase()"></div>
+                <div class="form-group"><label for="precioMillarUSD">Precio Millar ($):</label><input type="text" id="precioMillarUSD" class="input-calculado" readonly placeholder="0.00 $"></div>
             </div>
-            <div class="form-group">
-                <label for="tasa">Tasa (Bs por $):</label>
-                <input type="number" id="tasa" step="0.01">
-            </div>
+            <div class="form-group"><label for="tasa">Tasa (Bs por $):</label><input type="number" id="tasa" step="0.01"></div>
 
             <button onclick="procesarPedido()">Registrar Cotización</button>
         </div>
 
         <div class="table-container">
             <input type="text" id="buscador" class="buscador" placeholder="🔍 Buscar cliente..." oninput="filtrarVentas()">
-            <table id="tablaRegistros">
-                <thead><tr><th>Cliente</th><th>Detalles</th><th>Totales</th><th>Acción</th></tr></thead>
-                <tbody id="listaVentas"></tbody>
-            </table>
-            <button class="btn-excel" onclick="exportarExcel()">📊 Descargar Excel Cotizaciones</button>
+            <table id="tablaRegistros"><thead><tr><th>Cliente</th><th>Detalles</th><th>Totales</th><th>Acción</th></tr></thead><tbody id="listaVentas"></tbody></table>
             <button class="btn-borrar" onclick="borrarHistorial()">Borrar Historial</button>
         </div>
     </div>
@@ -236,99 +152,46 @@
             <div class="section-title">Órdenes a Producir</div>
             <div class="form-group">
                 <label for="selectPedidoProd">Selecciona el Pedido Cotizado:</label>
-                <select id="selectPedidoProd" onchange="cargarDatosPedidoProd()">
-                    <option value="">-- Selecciona un cliente --</option>
-                </select>
+                <select id="selectPedidoProd" onchange="cargarDatosPedidoProd()"><option value="">-- Selecciona un cliente --</option></select>
             </div>
             <div class="form-row">
-                <div class="form-group">
-                    <label>Kilos Totales a Mezclar:</label>
-                    <input type="text" id="prodKgTotal" class="input-calculado" readonly placeholder="0 Kg">
-                </div>
-                <div class="form-group">
-                    <label>Bolsas a Entregar:</label>
-                    <input type="text" id="prodBolsasTotal" class="input-calculado" readonly placeholder="0 uds">
-                </div>
+                <div class="form-group"><label>Kilos Totales a Mezclar:</label><input type="text" id="prodKgTotal" class="input-calculado" readonly placeholder="0 Kg"></div>
+                <div class="form-group"><label>Bolsas a Entregar:</label><input type="text" id="prodBolsasTotal" class="input-calculado" readonly placeholder="0 uds"></div>
             </div>
 
             <div class="section-title">Extrusión y Mezcla</div>
             <div class="form-group">
                 <label for="extMaquina">Asignar Extrusora:</label>
-                <select id="extMaquina">
-                    <script>for(let i=1; i<=10; i++) document.write(`<option value="Extrusora ${i}">Extrusora ${i}</option>`);</script>
-                </select>
+                <select id="extMaquina"><script>for(let i=1; i<=10; i++) document.write(`<option value="Extrusora ${i}">Extrusora ${i}</option>`);</script></select>
             </div>
             
             <div class="form-row">
-                <div class="form-group" style="flex: 2;">
-                    <label>Material 1:</label>
-                    <input type="text" id="mat1Nombre" placeholder="Ej: Fb3003">
-                </div>
-                <div class="form-group">
-                    <label>%</label>
-                    <input type="number" id="mat1Pct" value="70" oninput="calcularMezcla()">
-                </div>
-                <div class="form-group">
-                    <label>Kilos</label>
-                    <input type="text" id="mat1Kg" class="input-calculado" readonly>
-                </div>
+                <div class="form-group" style="flex: 2;"><label>Material 1:</label><input type="text" id="mat1Nombre" placeholder="Ej: Fb3003"></div>
+                <div class="form-group"><label>%</label><input type="number" id="mat1Pct" value="70" oninput="calcularMezcla()"></div>
+                <div class="form-group"><label>Kilos</label><input type="text" id="mat1Kg" class="input-calculado" readonly></div>
             </div>
 
             <div class="form-row">
-                <div class="form-group" style="flex: 2;">
-                    <label>Material 2 (Opcional):</label>
-                    <input type="text" id="mat2Nombre" placeholder="Ej: 11pg1">
-                </div>
-                <div class="form-group">
-                    <label>%</label>
-                    <input type="number" id="mat2Pct" value="28" oninput="calcularMezcla()">
-                </div>
-                <div class="form-group">
-                    <label>Kilos</label>
-                    <input type="text" id="mat2Kg" class="input-calculado" readonly>
-                </div>
+                <div class="form-group" style="flex: 2;"><label>Material 2 (Opcional):</label><input type="text" id="mat2Nombre" placeholder="Ej: 11pg1"></div>
+                <div class="form-group"><label>%</label><input type="number" id="mat2Pct" value="28" oninput="calcularMezcla()"></div>
+                <div class="form-group"><label>Kilos</label><input type="text" id="mat2Kg" class="input-calculado" readonly></div>
             </div>
 
             <div class="form-row">
-                <div class="form-group" style="flex: 2;">
-                    <label>Pigmentos / Aditivos:</label>
-                    <input type="text" id="adiNombre" placeholder="Ej: Masterbatch Blanco">
-                </div>
-                <div class="form-group">
-                    <label>%</label>
-                    <input type="number" id="adiPct" value="2" oninput="calcularMezcla()">
-                </div>
-                <div class="form-group">
-                    <label>Kilos</label>
-                    <input type="text" id="adiKg" class="input-calculado" readonly>
-                </div>
+                <div class="form-group" style="flex: 2;"><label>Pigmentos/Aditivos:</label><input type="text" id="adiNombre" placeholder="Ej: Blanco"></div>
+                <div class="form-group"><label>%</label><input type="number" id="adiPct" value="2" oninput="calcularMezcla()"></div>
+                <div class="form-group"><label>Kilos</label><input type="text" id="adiKg" class="input-calculado" readonly></div>
             </div>
             <small id="sumaControl" style="display:block; text-align:right; margin-bottom: 15px; color:#8e8e93;">Suma: 100%</small>
 
-            <div class="section-title">Impresión</div>
+            <div class="section-title">Impresión y Sellado</div>
             <div class="form-group">
                 <label for="impMaquina">Asignar Impresora:</label>
-                <select id="impMaquina">
-                    <option value="N/A">Sin Impresión</option>
-                    <script>for(let i=1; i<=4; i++) document.write(`<option value="Impresora ${i}">Impresora ${i}</option>`);</script>
-                </select>
+                <select id="impMaquina"><option value="N/A">Sin Impresión</option><script>for(let i=1; i<=4; i++) document.write(`<option value="Impresora ${i}">Impresora ${i}</option>`);</script></select>
             </div>
-
-            <div class="section-title">Sellado y Corte</div>
             <div class="form-row">
-                <div class="form-group">
-                    <label for="sellMaquina">Asignar Selladora:</label>
-                    <select id="sellMaquina">
-                        <script>for(let i=1; i<=16; i++) document.write(`<option value="Selladora ${i}">Selladora ${i}</option>`);</script>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="sellTipo">Tipo de Sellado:</label>
-                    <select id="sellTipo">
-                        <option value="Lateral">Lateral</option>
-                        <option value="Fondo">De Fondo</option>
-                    </select>
-                </div>
+                <div class="form-group"><label for="sellMaquina">Selladora:</label><select id="sellMaquina"><script>for(let i=1; i<=16; i++) document.write(`<option value="Selladora ${i}">Selladora ${i}</option>`);</script></select></div>
+                <div class="form-group"><label for="sellTipo">Tipo:</label><select id="sellTipo"><option value="Lateral">Lateral</option><option value="Fondo">De Fondo</option></select></div>
             </div>
 
             <button onclick="guardarOrdenProduccion()">Generar Orden de Producción</button>
@@ -336,40 +199,28 @@
 
         <div class="table-container">
             <h3 style="margin-top:0; color:#0F204C;">Órdenes en Planta</h3>
-            <table id="tablaProduccion">
-                <thead><tr><th>Cliente / Máquinas</th><th>Mezcla Formulada</th><th>Acción</th></tr></thead>
-                <tbody id="listaProduccion"></tbody>
-            </table>
+            <table id="tablaProduccion"><thead><tr><th>Cliente / Máquinas</th><th>Mezcla</th><th>Acción</th></tr></thead><tbody id="listaProduccion"></tbody></table>
+            <button class="btn-borrar" onclick="borrarProduccion()">Borrar Órdenes</button>
         </div>
     </div>
 
     <script>
-        // MEMORIA
-        let ventas = JSON.parse(localStorage.getItem('ventasConaplastV11')) || [];
-        let ordenesProd = JSON.parse(localStorage.getItem('prodConaplastV1')) || [];
+        let ventas = JSON.parse(localStorage.getItem('ventasConaplastV12')) || [];
+        let ordenesProd = JSON.parse(localStorage.getItem('prodConaplastV2')) || [];
         
         mostrarVentas(ventas);
         mostrarOrdenes();
 
-        // CONTROL DE PESTAÑAS
         function switchTab(tabId) {
             document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
             document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
             document.getElementById(tabId + '-view').classList.add('active');
             document.getElementById('btn-' + tabId).classList.add('active');
-            
-            if(tabId === 'produccion') {
-                actualizarSelectPedidosProd();
-            }
+            if(tabId === 'produccion') actualizarSelectPedidosProd();
         }
 
-        function formatearMoneda(valorNum) {
-            return Number(valorNum).toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-        }
+        function formatearMoneda(valorNum) { return Number(valorNum).toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
 
-        // ==============================================
-        // LÓGICA COTIZACIÓN
-        // ==============================================
         function getPesoUnaBolsaKg() {
             const ancho = parseFloat(document.getElementById('ancho').value) || 0;
             const largo = parseFloat(document.getElementById('largo').value) || 0;
@@ -377,13 +228,9 @@
             const llevaFuelle = document.getElementById('llevaFuelle').checked;
             const fI = llevaFuelle ? (parseFloat(document.getElementById('fuelleIzq').value) || 0) : 0;
             const fD = llevaFuelle ? (parseFloat(document.getElementById('fuelleDer').value) || 0) : 0;
-            const materialValue = document.getElementById('material').value;
-            const densidad = parseFloat(materialValue.split('|')[0]);
+            const densidad = parseFloat(document.getElementById('material').value.split('|')[0]);
 
-            if (ancho > 0 && largo > 0 && espesor > 0) {
-                const anchoTotal = fI + ancho + fD;
-                return (anchoTotal * largo * (espesor * 2) * densidad) / 1000;
-            }
+            if (ancho > 0 && largo > 0 && espesor > 0) return ((fI + ancho + fD) * largo * (espesor * 2) * densidad) / 1000;
             return 0;
         }
 
@@ -392,39 +239,29 @@
             if (pesoKg > 0) {
                 document.getElementById('pesoEspecifico').value = (pesoKg * 1000).toFixed(2) + ' g';
                 document.getElementById('pesoMillarKg').value = (pesoKg * 1000).toFixed(2) + ' Kg';
-            } else {
-                document.getElementById('pesoEspecifico').value = '';
-                document.getElementById('pesoMillarKg').value = '';
-            }
+            } else { document.getElementById('pesoEspecifico').value = ''; document.getElementById('pesoMillarKg').value = ''; }
 
             if(document.getElementById('cantidadBolsasInput').value) calcularDesdeBolsas();
             else if(document.getElementById('cantidadKgInput').value) calcularDesdeKg();
-
             calcularPreciosFinanzas();
         }
 
         function calcularDesdeBolsas() {
             const bolsas = parseFloat(document.getElementById('cantidadBolsasInput').value) || 0;
-            const pesoUnitario = getPesoUnaBolsaKg();
-            if (pesoUnitario > 0 && bolsas > 0) {
-                document.getElementById('cantidadKgInput').value = (bolsas * pesoUnitario).toFixed(2);
-            } else { document.getElementById('cantidadKgInput').value = ''; }
+            const pesoU = getPesoUnaBolsaKg();
+            document.getElementById('cantidadKgInput').value = (pesoU > 0 && bolsas > 0) ? (bolsas * pesoU).toFixed(2) : '';
         }
 
         function calcularDesdeKg() {
             const kg = parseFloat(document.getElementById('cantidadKgInput').value) || 0;
-            const pesoUnitario = getPesoUnaBolsaKg();
-            if (pesoUnitario > 0 && kg > 0) {
-                document.getElementById('cantidadBolsasInput').value = Math.floor(kg / pesoUnitario);
-            } else { document.getElementById('cantidadBolsasInput').value = ''; }
+            const pesoU = getPesoUnaBolsaKg();
+            document.getElementById('cantidadBolsasInput').value = (pesoU > 0 && kg > 0) ? Math.floor(kg / pesoU) : '';
         }
 
         function calcularPreciosFinanzas() {
-            const pesoMillarKg = getPesoUnaBolsaKg() * 1000;
+            const pesoM = getPesoUnaBolsaKg() * 1000;
             const precioKg = parseFloat(document.getElementById('precioKg').value) || 0;
-            if (pesoMillarKg > 0 && precioKg > 0) {
-                document.getElementById('precioMillarUSD').value = formatearMoneda(pesoMillarKg * precioKg) + ' $';
-            } else { document.getElementById('precioMillarUSD').value = ''; }
+            document.getElementById('precioMillarUSD').value = (pesoM > 0 && precioKg > 0) ? formatearMoneda(pesoM * precioKg) + ' $' : '';
         }
 
         function toggleImpresion() { document.getElementById('opcionesImpresion').style.display = document.getElementById('impresa').checked ? 'block' : 'none'; }
@@ -444,46 +281,37 @@
             if (!cliente || !kgFinal || !precioKg || !tasa || !ancho || !largo || !esp) { alert("⚠️ Completa los datos."); return; }
 
             const llevaFuelle = document.getElementById('llevaFuelle').checked;
-            const fuelleIzq = document.getElementById('fuelleIzq').value;
-            const fuelleDer = document.getElementById('fuelleDer').value;
-            const nombreMaterial = document.getElementById('material').value.split('|')[1];
+            const fI = document.getElementById('fuelleIzq').value;
+            const fD = document.getElementById('fuelleDer').value;
+            const nombreMat = document.getElementById('material').value.split('|')[1];
             const esImp = document.getElementById('impresa').checked;
-            const stringMedidas = llevaFuelle ? `${fuelleIzq}+${ancho}+${fuelleDer}*${largo}*${esp}` : `${ancho}*${largo}*${esp}`;
+            const strMedidas = llevaFuelle ? `${fI}+${ancho}+${fD}*${largo}*${esp}` : `${ancho}*${largo}*${esp}`;
             
             const totalUSDRaw = kgFinal * precioKg;
-            const totalBsRaw = totalUSDRaw * tasa;
-            const precioMillarRaw = getPesoUnaBolsaKg() * 1000 * precioKg;
 
             const nuevaVenta = {
-                id: Date.now().toString(), // ID Único para enlazar con producción
-                fecha: new Date().toLocaleDateString('es-VE'),
-                cliente, rif: document.getElementById('rif').value || 'N/A', material: nombreMaterial, medidas: stringMedidas,
-                espesor: esp, esImpresa: esImp, caras: esImp ? document.getElementById('caras').value : '0', colores: esImp ? document.getElementById('colores').value : '0',
+                id: Date.now().toString(), fecha: new Date().toLocaleDateString('es-VE'), cliente, rif: document.getElementById('rif').value || 'N/A', 
+                material: nombreMat, medidas: strMedidas, espesor: esp, esImpresa: esImp, caras: esImp ? document.getElementById('caras').value : '0', colores: esImp ? document.getElementById('colores').value : '0',
                 pesoKg: kgFinal.toFixed(2), rawPesoKg: kgFinal, cantidadBolsas: parseInt(bolsasFinal).toLocaleString('es-VE'),
-                totalUSD: formatearMoneda(totalUSDRaw), totalBs: formatearMoneda(totalBsRaw), precioM: formatearMoneda(precioMillarRaw),
-                rawPrecioKg: precioKg, rawTasa: tasa, rawTotalUSD: totalUSDRaw, rawTotalBs: totalBsRaw
+                totalUSD: formatearMoneda(totalUSDRaw), totalBs: formatearMoneda(totalUSDRaw * tasa), precioM: formatearMoneda(getPesoUnaBolsaKg() * 1000 * precioKg),
+                rawPrecioKg: precioKg, rawTasa: tasa
             };
 
             ventas.unshift(nuevaVenta);
-            localStorage.setItem('ventasConaplastV11', JSON.stringify(ventas));
-            
-            document.getElementById('buscador').value = ''; 
-            mostrarVentas(ventas);
-            actualizarSelectPedidosProd();
-
+            localStorage.setItem('ventasConaplastV12', JSON.stringify(ventas));
+            document.getElementById('buscador').value = ''; mostrarVentas(ventas); actualizarSelectPedidosProd();
             document.getElementById('modalCuerpoTexto').innerHTML = `<strong>Kilos:</strong><br><span style="font-size:26px;color:#0F204C">${nuevaVenta.pesoKg} Kg</span>`;
             document.getElementById('modalResultado').style.display = 'flex';
         }
 
         function filtrarVentas() {
-            const texto = document.getElementById('buscador').value.toLowerCase();
-            mostrarVentas(ventas.filter(v => v.cliente.toLowerCase().includes(texto) || v.rif.toLowerCase().includes(texto) || v.fecha.includes(texto)));
+            const txt = document.getElementById('buscador').value.toLowerCase();
+            mostrarVentas(ventas.filter(v => v.cliente.toLowerCase().includes(txt) || v.fecha.includes(txt)));
         }
 
-        function mostrarVentas(array) {
-            const tbody = document.getElementById('listaVentas');
-            tbody.innerHTML = ''; 
-            array.forEach((v, i) => {
+        function mostrarVentas(arr) {
+            const tbody = document.getElementById('listaVentas'); tbody.innerHTML = ''; 
+            arr.forEach((v, i) => {
                 const tr = document.createElement('tr');
                 tr.innerHTML = `<td><span class="fecha-tag">${v.fecha}</span><strong>${v.cliente}</strong></td>
                     <td><small>${v.pesoKg} Kg / ${v.cantidadBolsas} uds</small><br><small style="color:gray">${v.medidas}</small></td>
@@ -493,148 +321,90 @@
             });
         }
 
-        function enviarWA(index) {
-            const v = ventas[index];
-            const detImp = v.esImpresa ? `\n\n🎨 *Detalles de Impresión:*\n• Caras: ${v.caras}\n• Colores: ${v.colores}` : `\n\n🎨 *Sin impresión`;
-            const msg = `Hola, cotización de *Conaplast C.A.*\n\n👤 *Cliente:* ${v.cliente}\n• RIF: ${v.rif}\n\n📦 *Especificaciones:*\n• Material: ${v.material}\n• Medidas: ${v.medidas}\n• Pedido total: ${v.pesoKg} Kg\n• Bolsas aprox: ${v.cantidadBolsas}${detImp}\n\n💰 *Total:*\n• $${v.totalUSD} / Bs. ${v.totalBs}\n\nQuedamos a su orden.`;
+        function enviarWA(i) {
+            const v = ventas[i];
+            const detImp = v.esImpresa ? `\n\n🎨 *Impresión:*\n• Caras: ${v.caras} / Colores: ${v.colores}` : `\n\n🎨 *Sin impresión*`;
+            const msg = `Cotización *Conaplast C.A.*\n\n👤 *Cliente:* ${v.cliente}\n• RIF: ${v.rif}\n\n📦 *Especificaciones:*\n• Material: ${v.material}\n• Medidas: ${v.medidas}\n• Pedido: ${v.pesoKg} Kg\n• Bolsas: ${v.cantidadBolsas}${detImp}\n\n💰 *Total:*\n• $${v.totalUSD} / Bs. ${v.totalBs}`;
             window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
         }
 
-        // ==============================================
-        // LÓGICA PRODUCCIÓN
-        // ==============================================
+        // LÓGICA DE PRODUCCIÓN
         let pedidoActualKg = 0;
-
         function actualizarSelectPedidosProd() {
-            const select = document.getElementById('selectPedidoProd');
-            select.innerHTML = '<option value="">-- Selecciona un pedido --</option>';
-            ventas.forEach(v => {
-                const opt = document.createElement('option');
-                opt.value = v.id;
-                opt.text = `${v.cliente} - ${v.pesoKg} Kg (${v.fecha})`;
-                select.appendChild(opt);
-            });
+            const sel = document.getElementById('selectPedidoProd'); sel.innerHTML = '<option value="">-- Selecciona un pedido --</option>';
+            ventas.forEach(v => { const opt = document.createElement('option'); opt.value = v.id; opt.text = `${v.cliente} - ${v.pesoKg} Kg`; sel.appendChild(opt); });
         }
 
         function cargarDatosPedidoProd() {
-            const idSeleccionado = document.getElementById('selectPedidoProd').value;
-            const pedido = ventas.find(v => v.id === idSeleccionado);
-            if (pedido) {
-                document.getElementById('prodKgTotal').value = pedido.pesoKg + ' Kg';
-                document.getElementById('prodBolsasTotal').value = pedido.cantidadBolsas + ' uds';
-                pedidoActualKg = pedido.rawPesoKg;
-                
-                // Si el pedido era impreso, pre-seleccionar una impresora
-                if(pedido.esImpresa) document.getElementById('impMaquina').value = "Impresora 1";
-                else document.getElementById('impMaquina').value = "N/A";
-                
+            const id = document.getElementById('selectPedidoProd').value;
+            const p = ventas.find(v => v.id === id);
+            if (p) {
+                document.getElementById('prodKgTotal').value = p.pesoKg + ' Kg';
+                document.getElementById('prodBolsasTotal').value = p.cantidadBolsas + ' uds';
+                pedidoActualKg = p.rawPesoKg;
+                document.getElementById('impMaquina').value = p.esImpresa ? "Impresora 1" : "N/A";
                 calcularMezcla();
             } else {
-                document.getElementById('prodKgTotal').value = '';
-                document.getElementById('prodBolsasTotal').value = '';
-                pedidoActualKg = 0;
-                document.getElementById('mat1Kg').value = '';
-                document.getElementById('mat2Kg').value = '';
-                document.getElementById('adiKg').value = '';
+                pedidoActualKg = 0; document.getElementById('prodKgTotal').value = ''; document.getElementById('prodBolsasTotal').value = '';
+                document.getElementById('mat1Kg').value = ''; document.getElementById('mat2Kg').value = ''; document.getElementById('adiKg').value = '';
                 document.getElementById('sumaControl').innerText = "Suma: 0%";
             }
         }
 
         function calcularMezcla() {
             if (pedidoActualKg === 0) return;
-            
-            const p1 = parseFloat(document.getElementById('mat1Pct').value) || 0;
-            const p2 = parseFloat(document.getElementById('mat2Pct').value) || 0;
-            const pa = parseFloat(document.getElementById('adiPct').value) || 0;
-            
+            const p1 = parseFloat(document.getElementById('mat1Pct').value) || 0, p2 = parseFloat(document.getElementById('mat2Pct').value) || 0, pa = parseFloat(document.getElementById('adiPct').value) || 0;
             const suma = p1 + p2 + pa;
-            const control = document.getElementById('sumaControl');
-            control.innerText = `Suma: ${suma}%`;
+            const ctrl = document.getElementById('sumaControl'); ctrl.innerText = `Suma: ${suma}%`;
             
             if (suma === 100) {
-                control.className = 'input-success';
-                document.getElementById('mat1Kg').value = ((p1/100) * pedidoActualKg).toFixed(1) + ' Kg';
-                document.getElementById('mat2Kg').value = ((p2/100) * pedidoActualKg).toFixed(1) + ' Kg';
-                document.getElementById('adiKg').value = ((pa/100) * pedidoActualKg).toFixed(1) + ' Kg';
+                ctrl.className = 'input-success';
+                document.getElementById('mat1Kg').value = ((p1/100)*pedidoActualKg).toFixed(1) + ' Kg';
+                document.getElementById('mat2Kg').value = ((p2/100)*pedidoActualKg).toFixed(1) + ' Kg';
+                document.getElementById('adiKg').value = ((pa/100)*pedidoActualKg).toFixed(1) + ' Kg';
             } else {
-                control.className = 'input-error';
-                document.getElementById('mat1Kg').value = 'Error';
-                document.getElementById('mat2Kg').value = 'Error';
-                document.getElementById('adiKg').value = 'Error';
+                ctrl.className = 'input-error'; document.getElementById('mat1Kg').value = 'Error'; document.getElementById('mat2Kg').value = 'Error'; document.getElementById('adiKg').value = 'Error';
             }
         }
 
         function guardarOrdenProduccion() {
-            const idSeleccionado = document.getElementById('selectPedidoProd').value;
-            if (!idSeleccionado) { alert("⚠️ Selecciona un pedido cotizado primero."); return; }
-            
-            const suma = (parseFloat(document.getElementById('mat1Pct').value)||0) + (parseFloat(document.getElementById('mat2Pct').value)||0) + (parseFloat(document.getElementById('adiPct').value)||0);
-            if (suma !== 100) { alert("🛑 La mezcla de extrusión debe sumar exactamente 100%."); return; }
+            const id = document.getElementById('selectPedidoProd').value;
+            if (!id) { alert("⚠️ Selecciona un pedido cotizado."); return; }
+            if (document.getElementById('sumaControl').innerText !== "Suma: 100%") { alert("🛑 La mezcla debe sumar 100%."); return; }
 
-            const pedido = ventas.find(v => v.id === idSeleccionado);
-            
-            const nuevaOrden = {
-                idPedido: idSeleccionado,
-                cliente: pedido.cliente,
-                medidas: pedido.medidas,
-                pesoKg: pedido.pesoKg,
+            const p = ventas.find(v => v.id === id);
+            const nO = {
+                idPedido: id, cliente: p.cliente, medidas: p.medidas, pesoKg: p.pesoKg, fecha: new Date().toLocaleDateString('es-VE'),
                 extrusora: document.getElementById('extMaquina').value,
                 mat1: `${document.getElementById('mat1Nombre').value || 'Mat 1'}: ${document.getElementById('mat1Pct').value}% (${document.getElementById('mat1Kg').value})`,
                 mat2: document.getElementById('mat2Pct').value > 0 ? `${document.getElementById('mat2Nombre').value || 'Mat 2'}: ${document.getElementById('mat2Pct').value}% (${document.getElementById('mat2Kg').value})` : null,
                 aditivo: document.getElementById('adiPct').value > 0 ? `${document.getElementById('adiNombre').value || 'Aditivo'}: ${document.getElementById('adiPct').value}% (${document.getElementById('adiKg').value})` : null,
-                impresora: document.getElementById('impMaquina').value,
-                selladora: document.getElementById('sellMaquina').value,
-                selladoTipo: document.getElementById('sellTipo').value,
-                fecha: new Date().toLocaleDateString('es-VE')
+                impresora: document.getElementById('impMaquina').value, selladora: document.getElementById('sellMaquina').value, selladoTipo: document.getElementById('sellTipo').value
             };
 
-            ordenesProd.unshift(nuevaOrden);
-            localStorage.setItem('prodConaplastV1', JSON.stringify(ordenesProd));
-            mostrarOrdenes();
-
-            document.getElementById('modalCuerpoTexto').innerHTML = `<strong>Orden Generada</strong><br><span style="font-size:18px;color:#0F204C">Enviado a ${nuevaOrden.extrusora}</span>`;
+            ordenesProd.unshift(nO); localStorage.setItem('prodConaplastV2', JSON.stringify(ordenesProd)); mostrarOrdenes();
+            document.getElementById('modalCuerpoTexto').innerHTML = `<strong>Orden Generada</strong><br><span style="font-size:18px;color:#0F204C">Enviado a ${nO.extrusora}</span>`;
             document.getElementById('modalResultado').style.display = 'flex';
         }
 
         function mostrarOrdenes() {
-            const tbody = document.getElementById('listaProduccion');
-            tbody.innerHTML = ''; 
-            ordenesProd.forEach((o, index) => {
+            const tbody = document.getElementById('listaProduccion'); tbody.innerHTML = ''; 
+            ordenesProd.forEach((o, i) => {
                 const tr = document.createElement('tr');
-                let mezclaHTML = `<li>${o.mat1}</li>`;
-                if(o.mat2) mezclaHTML += `<li>${o.mat2}</li>`;
-                if(o.aditivo) mezclaHTML += `<li>${o.aditivo}</li>`;
-
+                let mz = `<li>${o.mat1}</li>`; if(o.mat2) mz += `<li>${o.mat2}</li>`; if(o.aditivo) mz += `<li>${o.aditivo}</li>`;
                 tr.innerHTML = `<td><span class="fecha-tag">${o.fecha}</span><strong>${o.cliente}</strong> (${o.pesoKg} Kg)<br>
                     <span class="tag-maquina">EXT: ${o.extrusora.replace('Extrusora ','E')}</span>
                     ${o.impresora !== 'N/A' ? `<span class="tag-maquina">IMP: ${o.impresora.replace('Impresora ','I')}</span>` : ''}
-                    <span class="tag-maquina">SEL: ${o.selladora.replace('Selladora ','S')} (${o.selladoTipo.charAt(0)})</span>
-                    </td>
-                    <td><ul style="margin:0; padding-left:15px; font-size:12px; color:gray;">${mezclaHTML}</ul></td>
-                    <td><button class="btn-wa" style="background:#0F204C;" onclick="imprimirOrden(${index})">🖨️</button></td>`;
+                    <span class="tag-maquina">SEL: ${o.selladora.replace('Selladora ','S')} (${o.selladoTipo.charAt(0)})</span></td>
+                    <td><ul style="margin:0; padding-left:15px; font-size:12px; color:gray;">${mz}</ul></td>
+                    <td><button class="btn-borrar" style="margin-top:0; padding: 8px;" onclick="eliminarOrden(${i})">X</button></td>`;
                 tbody.appendChild(tr);
             });
         }
 
-        function imprimirOrden(index) {
-            const o = ordenesProd[index];
-            const ventana = window.open('', '', 'width=800,height=600');
-            ventana.document.write(`<html><head><title>Orden de Producción - Conaplast</title>
-                <style>body{font-family:Arial;} .box{border:2px solid #000; padding:15px; margin-bottom:15px;} h2{margin-top:0;} </style>
-                </head><body>
-                <h2>CONAPLAST C.A. - ORDEN DE PRODUCCIÓN</h2>
-                <div class="box"><strong>Cliente:</strong> ${o.cliente} | <strong>Fecha:</strong> ${o.fecha}<br><strong>Medidas:</strong> ${o.medidas} | <strong>Peso Total:</strong> ${o.pesoKg} Kg</div>
-                <div class="box"><h3>1. EXTRUSIÓN (${o.extrusora})</h3><ul><li>${o.mat1}</li>${o.mat2 ? `<li>${o.mat2}</li>` : ''}${o.aditivo ? `<li>${o.aditivo}</li>` : ''}</ul></div>
-                <div class="box"><h3>2. IMPRESIÓN</h3>Máquina: ${o.impresora}</div>
-                <div class="box"><h3>3. SELLADO (${o.selladora})</h3>Tipo de Sellado: ${o.selladoTipo}</div>
-                <br><br><br><br>___________________________<br>Firma Supervisor
-                </body></html>`);
-            ventana.document.close();
-            ventana.print();
-        }
-
-        function exportarExcel() { /* Igual que el código anterior */ }
-        function borrarHistorial() { /* Igual que el código anterior */ }
+        function eliminarOrden(i) { if(confirm("¿Borrar esta orden?")) { ordenesProd.splice(i, 1); localStorage.setItem('prodConaplastV2', JSON.stringify(ordenesProd)); mostrarOrdenes(); } }
+        function borrarHistorial() { if(confirm("¿Borrar todo el historial de Cotizaciones?")) { ventas = []; localStorage.removeItem('ventasConaplastV12'); mostrarVentas(ventas); } }
+        function borrarProduccion() { if(confirm("¿Borrar todas las órdenes de producción?")) { ordenesProd = []; localStorage.removeItem('prodConaplastV2'); mostrarOrdenes(); } }
     </script>
 </body>
 </html>
